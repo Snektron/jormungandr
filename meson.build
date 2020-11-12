@@ -1,7 +1,7 @@
 project(
     'jormungandr',
     'cpp',
-    version: '0.0.0',
+    version: '0.0.42-B',
     default_options: [
         'cpp_std=c++2a',
         'buildtype=debugoptimized',
@@ -17,5 +17,5 @@ executable(
     sources,
     install: true,
     build_by_default: true,
-    include_directories: include_directories('src'),
+    include_directories: [include_directories('src'), include_directories('include')],
 )
