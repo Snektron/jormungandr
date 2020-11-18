@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <fstream>
 
-#include "decode/binary.hpp"
+#include "decode/tsv.hpp"
 
 using node_type = uint32_t;
 
@@ -13,7 +13,7 @@ auto main(int argc, char* argv[]) -> int {
     }
 
     auto input = std::ifstream(argv[1]);
-    auto decoder = BinaryDecoder<node_type>(input);
+    auto decoder = TsvDecoder<node_type, ','>(input);
     auto graph = decoder.decode();
 
     return EXIT_SUCCESS;
