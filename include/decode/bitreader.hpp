@@ -26,6 +26,7 @@ class BitReader {
         auto read_unary(uint8_t bit) -> uint64_t;
         auto read_gamma() -> std::optional<uint64_t>;
         auto read_delta() -> std::optional<uint64_t>;
+        auto read_zeta(uint8_t k) -> std::optional<uint64_t>;
 
     private:
         auto discard_buffer_bits(uint8_t n) -> void;
