@@ -48,18 +48,25 @@ auto BitReader::read_bit() -> std::optional<uint8_t> {
     return bit;
 }
 
-auto BitReader::read_bits(size_t n) -> std::optional<uint64_t> {
+auto BitReader::read_bits(size_t n, std::endian endian) -> std::optional<uint64_t> {
     assert(n <= bit_size_of<uint64_t>());
 
     uint64_t result = 0;
-    while (n-- > 0) {
+    for (size_t i = 0; i < n; ++i) {
         auto maybe_bit = this->read_bit();
         if (!maybe_bit.has_value()) {
             return std::nullopt;
         }
 
-        result <<= 1;
-        result |= maybe_bit.value();
+        switch (endian) {
+            case std::endian::big:
+                result <<= 1;
+                result |= maybe_bit.value();
+                break;
+            case std::endian::little:
+                result |= maybe_bit.value() << i;
+                break;
+        }
     }
     return result;
 }
