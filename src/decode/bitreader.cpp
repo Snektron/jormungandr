@@ -66,6 +66,9 @@ auto BitReader::read_bits(size_t n, std::endian endian) -> std::optional<uint64_
             case std::endian::little:
                 result |= maybe_bit.value() << i;
                 break;
+            default:
+                // In case this platform uses mixed endian
+                assert(false);
         }
     }
     return result;
@@ -85,6 +88,27 @@ auto BitReader::read_unary(uint8_t bit) -> uint64_t {
     }
 
     return result;
+}
+
+auto BitReader::read_gamma() -> std::optional<uint64_t> {
+    uint64_t length = this->read_unary(0) + 1;
+    auto maybe_value = this->read_bits(length);
+    if (maybe_value.has_value())
+        *maybe_value -= 1; // Correct for the fact that gamma coding cannot support 0
+    return maybe_value;
+}
+
+auto BitReader::read_delta() -> std::optional<uint64_t> {
+    auto maybe_n = this->read_gamma();
+    if (!maybe_n.has_value())
+        return std::nullopt;
+
+    auto maybe_trailing_bits = this->read_bits(maybe_n.value());
+    if (!maybe_trailing_bits.has_value())
+        return std::nullopt;
+    uint64_t value = 1 << maybe_n.value() | maybe_trailing_bits.value();
+    // Correct for the fact that delta coding cannot support 0
+    return value - 1;
 }
 
 auto BitReader::discard_buffer_bits(uint8_t n) -> void {
