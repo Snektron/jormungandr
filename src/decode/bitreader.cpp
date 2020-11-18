@@ -1,5 +1,5 @@
 #include "decode/bitreader.hpp"
-#include "utility.h"
+#include "utility.hpp"
 #include <iostream>
 #include <climits>
 #include <cassert>

@@ -11,6 +11,8 @@ project(
 sources = [
     'src/main.cpp',
     'src/decode/bitreader.cpp',
+    'src/decode/property.cpp',
+    'src/graph/propertymap.cpp'
 ]
 
 executable(
