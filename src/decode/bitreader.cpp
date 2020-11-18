@@ -1,5 +1,6 @@
 #include "decode/bitreader.hpp"
 #include "utility.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 #include <climits>
 #include <cassert>
@@ -32,44 +33,34 @@ auto BitReader::peek_bit() -> std::optional<uint8_t> {
     return (this->bit_buffer & 0x80) == 0x80;
 }
 
-auto BitReader::read_bit() -> std::optional<uint8_t> {
-    auto bit = this->peek_bit();
-    if (!bit.has_value()) {
-        return std::nullopt;
+auto BitReader::read_bit() -> uint8_t {
+    auto maybe_bit = this->peek_bit();
+    if (!maybe_bit) {
+        throw EncodingException("Unexpected EOF");
     }
 
     this->discard_buffer_bits(1);
-
-    // Trigger eof so that we can call at_end
-    if (this->bit_buffer_left == 0) {
-        this->refill_buffer();
-    }
-
-    return bit;
+    return *maybe_bit;
 }
 
-auto BitReader::read_bits(size_t n, std::endian endian) -> std::optional<uint64_t> {
+auto BitReader::read_bits(size_t n, std::endian endian) -> uint64_t {
     assert(n <= bit_size_of<uint64_t>());
 
     uint64_t result = 0;
-    for (size_t i = 0; i < n; ++i) {
-        auto maybe_bit = this->read_bit();
-        if (!maybe_bit.has_value()) {
-            return std::nullopt;
-        }
-
-        switch (endian) {
-            case std::endian::big:
+    switch (endian) {
+        case std::endian::big:
+            while (n-- > 0) {
                 result <<= 1;
-                result |= maybe_bit.value();
-                break;
-            case std::endian::little:
-                result |= maybe_bit.value() << i;
-                break;
-            default:
-                // In case this platform uses mixed endian
-                assert(false);
-        }
+                result |= this->read_bit();
+            }
+            break;
+        case std::endian::little:
+            for (size_t i = 0; i < n; ++i) {
+                result |= this->read_bit() << i;
+            }
+            break;
+        default:
+            assert(false);
     }
     return result;
 }
@@ -80,50 +71,44 @@ auto BitReader::read_unary(uint8_t bit) -> uint64_t {
     uint64_t result = 0;
     while (true) {
         auto maybe_bit = this->peek_bit();
-        if (!maybe_bit.has_value() || maybe_bit.value() != bit)
+        if (!maybe_bit || *maybe_bit != bit)
             break;
 
-        this->read_bit();
+        this->discard_buffer_bits(1);
         ++result;
     }
 
     return result;
 }
 
-auto BitReader::read_gamma() -> std::optional<uint64_t> {
+auto BitReader::read_gamma() -> uint64_t {
     uint64_t length = this->read_unary(0) + 1;
-    auto maybe_value = this->read_bits(length);
-    if (maybe_value.has_value())
-        *maybe_value -= 1; // Correct for the fact that gamma coding cannot support 0
-    return maybe_value;
+    // Correct for the fact that gamma coding does not support 0
+    return this->read_bits(length) - 1;
 }
 
-auto BitReader::read_delta() -> std::optional<uint64_t> {
-    auto maybe_n = this->read_gamma();
-    if (!maybe_n.has_value())
-        return std::nullopt;
-
-    auto maybe_trailing_bits = this->read_bits(maybe_n.value());
-    if (!maybe_trailing_bits.has_value())
-        return std::nullopt;
-    uint64_t value = 1 << maybe_n.value() | maybe_trailing_bits.value();
-    // Correct for the fact that delta coding cannot support 0
+auto BitReader::read_delta() -> uint64_t {
+    uint64_t n = this->read_gamma();
+    uint64_t value = 1 << n | this->read_bits(n);
+    // Correct for the fact that delta coding does not support 0
     return value - 1;
 }
 
-auto BitReader::read_zeta(uint8_t k) -> std::optional<uint64_t> {
+auto BitReader::read_minimal_binary(uint64_t z) -> uint64_t {
+    uint64_t s = std::bit_width(z);
+    uint64_t m = (1 << s) - z;
+    uint64_t x = this->read_bits(s - 1);
+    return x < m ? x : (x << 1) + this->read_bit() - m;
+}
+
+auto BitReader::read_zeta(uint8_t k) -> uint64_t {
     uint64_t h = this->read_unary(0);
-    auto maybe_residual = this->read_bits(h * k + k - 1);
-    if (!maybe_residual.has_value())
-        return std::nullopt;
-    else if (maybe_residual.value() < (1 << h * k))
-        return maybe_residual.value() + (1 << h * k) - 1;
-
-    auto maybe_last_bit = this->read_bit();
-    if (!maybe_last_bit.has_value())
-        return std::nullopt;
-
-    return (maybe_residual.value() << 1) + maybe_last_bit.value() - 1;
+    assert(this->read_bit() == 1);
+    // read minimal binary of [0, 2^(hk + k) - 2^hk - 1]
+    uint64_t z = (1 << (h * k + k)) - (1 << (h * k));
+    uint64_t v = this->read_minimal_binary(z) + (1 << (h * k));
+    // Correct for the fact that zeta coding does not support 0
+    return v - 1;
 }
 
 auto BitReader::discard_buffer_bits(uint8_t n) -> void {
@@ -131,6 +116,12 @@ auto BitReader::discard_buffer_bits(uint8_t n) -> void {
 
     this->bit_buffer_left -= n;
     this->bit_buffer <<= n;
+
+    // Refill if required
+    // Also trigger eofbit when called from `read_bit`
+    if (this->bit_buffer_left == 0) {
+        this->refill_buffer();
+    }
 }
 
 auto BitReader::refill_buffer() -> bool {

@@ -14,7 +14,7 @@ consteval auto bit_size_of() -> size_t {
 template <typename... Args>
 auto make_msg(const Args&... args) {
     std::stringstream ss;
-    (ss << ... << args);
+    static_cast<void>((ss << ... << args));
     return ss.str();
 }
 
