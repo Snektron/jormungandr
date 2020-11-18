@@ -113,11 +113,17 @@ auto BitReader::read_delta() -> std::optional<uint64_t> {
 
 auto BitReader::read_zeta(uint8_t k) -> std::optional<uint64_t> {
     uint64_t h = this->read_unary(0);
-    assert(this->read_bit() == 1);
-    auto maybe_residual = this->read_bits(h * k);
+    auto maybe_residual = this->read_bits(h * k + k - 1);
     if (!maybe_residual.has_value())
         return std::nullopt;
-    return maybe_residual.value() + (1 << (h * k));
+    else if (maybe_residual.value() < (1 << h * k))
+        return maybe_residual.value() + (1 << h * k) - 1;
+
+    auto maybe_last_bit = this->read_bit();
+    if (!maybe_last_bit.has_value())
+        return std::nullopt;
+
+    return (maybe_residual.value() << 1) + maybe_last_bit.value() - 1;
 }
 
 auto BitReader::discard_buffer_bits(uint8_t n) -> void {
