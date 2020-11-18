@@ -32,7 +32,7 @@ auto TsvDecoder<T, Sep>::decode() -> std::unique_ptr<Graph<T>> {
         if(sep != Sep || this->input.fail())
             break;
 
-        result->addEdge(from, to);
+        result->add_edge(from, to);
     }
     return result;
 }

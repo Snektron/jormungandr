@@ -5,6 +5,9 @@
 #include <string>
 #include <vector>
 
+#include "type_cast.hpp"
+#include "utility.hpp"
+
 class PropertyMap {
     private:
         std::unordered_map<std::string, std::string> props;
@@ -19,12 +22,17 @@ class PropertyMap {
         auto as(const std::string&) -> T;
 
         template <typename T>
-        auto asList() -> std::vector<T>;
+        auto as_list(const std::string&) -> std::vector<T>;
 };
 
 template <typename T>
 auto PropertyMap::as(const std::string& key) -> T {
     return utils_type_cast<T>((*this)[key]);
+}
+
+template <typename T>
+auto PropertyMap::as_list(const std::string& key) -> std::vector<T> {
+    return map_values(split_string((*this)[key], ","), utils_type_cast<T, std::string>);
 }
 
 

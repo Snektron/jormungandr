@@ -19,6 +19,13 @@ class TypeCastException : public Exception {
         virtual ~TypeCastException() = default;
 };
 
+class ParseException : public Exception {
+    public:
+        template <typename... Args>
+        ParseException(const Args&... args) : Exception(args...) {}
+        virtual ~ParseException() = default;
+};
+
 class EncodingException : public Exception {
     public:
         template <typename... Args>
