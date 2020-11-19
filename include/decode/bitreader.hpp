@@ -6,12 +6,12 @@
 #include <bit>
 #include <cstdint>
 
+#include "bitbuffer.hpp"
+
 class BitReader {
     private:
         std::istream& input;
-        uint8_t bit_buffer;
-        uint8_t bit_buffer_left;
-
+        BitBuffer<16> buffer;
     public:
         BitReader(std::istream& input);
 
@@ -38,7 +38,7 @@ class BitReader {
         auto read_golomb(uint8_t b) -> uint64_t;
 
     private:
-        auto discard_buffer_bits(uint8_t n) -> void;
+        auto discard_buffer_bit() -> void;
         auto refill_buffer() -> bool;
 };
 

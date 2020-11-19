@@ -6,7 +6,7 @@
 #include <cassert>
 
 BitReader::BitReader(std::istream& input):
-    input(input), bit_buffer(0), bit_buffer_left(0) {}
+    input(input) {}
 
 auto BitReader::at_end() const -> bool {
     return this->input.eof();
@@ -20,17 +20,15 @@ auto BitReader::seek(size_t bit_offset) -> void {
         return;
     }
 
-    this->discard_buffer_bits(bit_offset % bit_size_of<uint8_t>());
+    for(size_t i = 0; i < bit_offset % bit_size_of<uint8_t>(); ++i)
+        this->discard_buffer_bit();
 }
 
 auto BitReader::peek_bit() -> std::optional<uint8_t> {
-    if (this->bit_buffer_left == 0 && !this->refill_buffer()) {
+    if(this->buffer.empty() && !this->refill_buffer())
         return std::nullopt;
-    }
 
-    // According to the webgraph implementation documentation, the first bit
-    // is the 7th bit of the first byte.
-    return (this->bit_buffer & 0x80) == 0x80;
+    return this->buffer.topBit();
 }
 
 auto BitReader::read_bit() -> uint8_t {
@@ -39,7 +37,7 @@ auto BitReader::read_bit() -> uint8_t {
         throw EncodingException("Unexpected EOF");
     }
 
-    this->discard_buffer_bits(1);
+    this->discard_buffer_bit();
     return *maybe_bit;
 }
 
@@ -75,7 +73,7 @@ auto BitReader::read_unary(uint8_t bit) -> uint64_t {
         if (!maybe_bit || *maybe_bit != bit)
             break;
 
-        this->discard_buffer_bits(1);
+        this->discard_buffer_bit();
         ++result;
     }
 
@@ -121,29 +119,26 @@ auto BitReader::read_golomb(uint8_t b) -> uint64_t {
     if (b == 0)
         return 0;
 
-    uint64_t q = this->read_unary(0) * b;
+    uint64_t q = this->read_unary_with_terminator(0) * b;
     return q + this->read_minimal_binary(b);
 }
 
-auto BitReader::discard_buffer_bits(uint8_t n) -> void {
-    assert(n <= this->bit_buffer_left);
-
-    this->bit_buffer_left -= n;
-    this->bit_buffer <<= n;
+auto BitReader::discard_buffer_bit() -> void {
+    this->buffer.popBit();
 
     // Refill if required
     // Also trigger eofbit when called from `read_bit`
-    if (this->bit_buffer_left == 0) {
+    if (this->buffer.empty()) {
         this->refill_buffer();
     }
 }
 
 auto BitReader::refill_buffer() -> bool {
-    this->bit_buffer = this->input.get();
-    if (this->input.eof()) {
-        this->bit_buffer_left = 0;
+    this->input.read(reinterpret_cast<char*>(this->buffer.data()),
+                        this->buffer.size() / bit_size_of<char>());
+    auto bytes_read = this->input.gcount();
+    if(bytes_read == 0)
         return false;
-    }
-    this->bit_buffer_left = bit_size_of<uint8_t>();
+    this->buffer.setOffset(bytes_read * bit_size_of<uint8_t>());
     return true;
 }
