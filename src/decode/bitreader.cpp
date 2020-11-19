@@ -4,7 +4,6 @@
 #include <istream>
 #include <climits>
 #include <cassert>
-#include <iostream>
 
 BitReader::BitReader(std::istream& input):
     input(input) {}
@@ -14,7 +13,6 @@ auto BitReader::at_end() const -> bool {
 }
 
 auto BitReader::seek(size_t bit_offset) -> void {
-    std::cout << "Seek " << std::endl;
     this->input.clear();
     this->input.seekg(bit_offset / bit_size_of<uint8_t>());
     if (this->input.fail() || !this->refill_buffer()) {
@@ -136,15 +134,9 @@ auto BitReader::discard_buffer_bit() -> void {
 }
 
 auto BitReader::refill_buffer() -> bool {
-    static size_t total_read = 0;
     this->input.read(reinterpret_cast<char*>(this->buffer.data()),
                         this->buffer.capacity());
     auto bytes_read = this->input.gcount();
-    total_read += bytes_read;
-    std::cout << "Read " << bytes_read << " bytes" << std::endl;
-    std::cout << "Total read " << total_read << " bytes" << std::endl;
-    std::cout << "EOF: " << this->input.eof() << std::endl;
-    std::cout << "Fail: " << this->input.fail() << std::endl;
     this->buffer.setOffset(bytes_read * bit_size_of<uint8_t>());
     this->buffer.setSize(bytes_read);
     return bytes_read != 0;

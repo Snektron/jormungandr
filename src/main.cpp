@@ -18,7 +18,7 @@ auto main(int argc, char* argv[]) -> int {
         return EXIT_FAILURE;
     }
 
-    auto input = std::ifstream(argv[1]);
+    auto input = std::ifstream(argv[1], std::ios::binary);
     auto decoder = WebGraphDecoder(input, 325557, {.min_interval_size = 4});
 
     while (auto node = decoder.next_node()) {

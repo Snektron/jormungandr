@@ -5,7 +5,6 @@
 
 #include <cstdint>
 #include <cstdlib>
-#include <iostream>
 
 template <size_t Bytes>
 class BitBuffer {
