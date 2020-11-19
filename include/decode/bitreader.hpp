@@ -24,6 +24,8 @@ class BitReader {
         // Reads bits in big endian
         auto read_bits(size_t n, std::endian = std::endian::big) -> uint64_t;
         auto read_unary(uint8_t bit) -> uint64_t;
+        // Also read a terminating bit, (which is !bit)
+        auto read_unary_with_terminator(uint8_t bit) -> uint64_t;
         auto read_gamma() -> uint64_t;
         auto read_delta() -> uint64_t;
         auto read_minimal_binary(uint64_t z) -> uint64_t;

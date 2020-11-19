@@ -1,7 +1,6 @@
 #include "decode/bitreader.hpp"
 #include "utility.hpp"
 #include "exceptions.hpp"
-#include <iostream>
 #include <climits>
 #include <cassert>
 
@@ -81,6 +80,12 @@ auto BitReader::read_unary(uint8_t bit) -> uint64_t {
     return result;
 }
 
+auto BitReader::read_unary_with_terminator(uint8_t bit) -> uint64_t {
+    uint64_t val = this->read_unary(bit);
+    assert(this->read_bit() == !bit);
+    return val;
+}
+
 auto BitReader::read_gamma() -> uint64_t {
     uint64_t length = this->read_unary(0) + 1;
     // Correct for the fact that gamma coding does not support 0
@@ -102,8 +107,7 @@ auto BitReader::read_minimal_binary(uint64_t z) -> uint64_t {
 }
 
 auto BitReader::read_zeta(uint8_t k) -> uint64_t {
-    uint64_t h = this->read_unary(0);
-    assert(this->read_bit() == 1);
+    uint64_t h = this->read_unary_with_terminator(0);
     // read minimal binary of [0, 2^(hk + k) - 2^hk - 1]
     uint64_t z = (1 << (h * k + k)) - (1 << (h * k));
     uint64_t v = this->read_minimal_binary(z) + (1 << (h * k));
