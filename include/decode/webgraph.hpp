@@ -22,6 +22,12 @@ struct EncodingConfig {
     Encoding reference_encoding = Encoding::UNARY;
     Encoding residual_encoding = Encoding::ZETA;
 
+    // According to the Java source, this is always gamma
+    Encoding interval_count_encoding = Encoding::GAMMA;
+
+    // According to the Java source, this is always gamma
+    Encoding interval_encoding = Encoding::GAMMA;
+
     uint8_t zeta_k = 3;
     uint8_t min_interval_size = 2;
     uint8_t window_size = 7;
@@ -31,8 +37,9 @@ class WebGraphDecoder {
     private:
         BitReader input;
         std::vector<std::vector<uint64_t>> window;
-        size_t next_node_index;
         EncodingConfig encoding_config;
+        size_t num_nodes;
+        size_t next_node_index;
 
     public:
         struct Node {
@@ -40,7 +47,7 @@ class WebGraphDecoder {
             std::span<const uint64_t> neighbors;
         };
 
-        WebGraphDecoder(std::istream& input, EncodingConfig encoding_config);
+        WebGraphDecoder(std::istream& input, size_t num_nodes, EncodingConfig encoding_config);
         auto next_node() -> std::optional<Node>;
 
     private:

@@ -17,13 +17,12 @@ auto main(int argc, char* argv[]) -> int {
     }
 
     auto input = std::ifstream(argv[1]);
-    auto decoder = WebGraphDecoder(input, {.min_interval_size = 4});
+    auto decoder = WebGraphDecoder(input, 325557, {.min_interval_size = 4});
 
-    for (int i = 0; i < 10; ++i) {
-        auto node = decoder.next_node().value();
-        std::cout << node.index << ": " << node.neighbors.size() << std::endl;
-        for (const auto n : node.neighbors) {
-            std::cout << node.index << " -> " << n << std::endl;
+    while (auto node = decoder.next_node()) {
+        std::cout << node.value().index << ": out_degree = " << node.value().neighbors.size() << std::endl;
+        for (const auto n : node.value().neighbors) {
+            std::cout << node.value().index << " -> " << n << std::endl;
         }
     }
 

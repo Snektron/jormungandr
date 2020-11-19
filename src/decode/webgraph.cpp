@@ -2,12 +2,12 @@
 #include "exceptions.hpp"
 #include <algorithm>
 
-WebGraphDecoder::WebGraphDecoder(std::istream& input, EncodingConfig encoding_config):
+WebGraphDecoder::WebGraphDecoder(std::istream& input, size_t num_nodes, EncodingConfig encoding_config):
     input(input), window(encoding_config.window_size + 1),
-    next_node_index(0), encoding_config(encoding_config) {}
+    encoding_config(encoding_config), num_nodes(num_nodes), next_node_index(0) {}
 
 auto WebGraphDecoder::next_node() -> std::optional<Node> {
-    if (this->input.at_end()) {
+    if (this->next_node_index >= this->num_nodes) {
         return std::nullopt;
     }
 
@@ -69,18 +69,20 @@ auto WebGraphDecoder::read_reference_list(uint64_t index, std::vector<uint64_t>&
 
 auto WebGraphDecoder::read_interval_list(uint64_t index, std::vector<uint64_t>& to) -> void {
     // Interval length and values are encoded using gamma encoding according to the Java source
-    uint64_t intervals = this->read_value(Encoding::GAMMA);
+    uint64_t intervals = this->read_value(this->encoding_config.interval_count_encoding);
     if (intervals == 0) {
         return;
     }
 
+    auto interval_count_encoding = this->encoding_config.interval_count_encoding;
+
     uint64_t prev = 0;
     for (uint64_t i = 0; i < intervals; ++i) {
         uint64_t left_extreme = i == 0 ?
-            this->read_maybe_negative(index, Encoding::GAMMA) :
-            this->read_value(Encoding::GAMMA) + prev;
+            this->read_maybe_negative(index, interval_count_encoding) :
+            this->read_value(interval_count_encoding) + prev;
 
-        uint64_t length = this->read_value(Encoding::GAMMA) + this->encoding_config.min_interval_size;
+        uint64_t length = this->read_value(interval_count_encoding) + this->encoding_config.min_interval_size;
 
         prev = left_extreme + length + 1;
 
