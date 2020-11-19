@@ -8,6 +8,8 @@
 #include "decode/binary.hpp"
 #include "decode/webgraph.hpp"
 
+#include "bitbuffer.hpp"
+
 using node_type = uint32_t;
 
 auto main(int argc, char* argv[]) -> int {
