@@ -3,7 +3,7 @@
 
 #include "decode/decoder.hpp"
 
-template <typename T>
+template <std::unsigned_integral T>
 class BinaryDecoder : public Decoder<T> {
     public:
         BinaryDecoder(std::istream&);
@@ -12,10 +12,10 @@ class BinaryDecoder : public Decoder<T> {
         auto decode() -> std::unique_ptr<Graph<T>>;
 };
 
-template <typename T>
+template <std::unsigned_integral T>
 BinaryDecoder<T>::BinaryDecoder(std::istream& input) : Decoder<T>(input) {}
 
-template <typename T>
+template <std::unsigned_integral T>
 auto BinaryDecoder<T>::decode() -> std::unique_ptr<Graph<T>> {
     auto result = std::make_unique<Graph<T>>();
     while(this->input) {

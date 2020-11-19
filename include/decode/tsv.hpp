@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-template <typename T, char Sep = '\t'>
+template <std::unsigned_integral T, char Sep = '\t'>
 class TsvDecoder : public Decoder<T> {
     public:
         TsvDecoder(std::istream&);
@@ -14,10 +14,10 @@ class TsvDecoder : public Decoder<T> {
         auto decode() -> std::unique_ptr<Graph<T>>;
 };
 
-template <typename T, char Sep>
+template <std::unsigned_integral T, char Sep>
 TsvDecoder<T, Sep>::TsvDecoder(std::istream& input) : Decoder<T>(input) {}
 
-template <typename T, char Sep>
+template <std::unsigned_integral T, char Sep>
 auto TsvDecoder<T, Sep>::decode() -> std::unique_ptr<Graph<T>> {
     auto result = std::make_unique<Graph<T>>();
     while(this->input) {

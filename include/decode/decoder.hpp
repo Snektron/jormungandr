@@ -3,10 +3,11 @@
 
 #include <memory>
 #include <iosfwd>
+#include <concepts>
 
 #include "graph/graph.hpp"
 
-template <typename T>
+template <std::unsigned_integral T>
 class Decoder {
     protected:
         std::istream& input;
@@ -17,10 +18,10 @@ class Decoder {
         virtual auto decode() -> std::unique_ptr<Graph<T>> = 0;
 };
 
-template <typename T>
+template <std::unsigned_integral T>
 Decoder<T>::Decoder(std::istream& input) : input(input) {}
 
-template <typename T>
+template <std::unsigned_integral T>
 Decoder<T>::~Decoder() {}
 
 #endif
