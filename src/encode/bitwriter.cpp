@@ -1,11 +1,15 @@
 #include "encode/bitwriter.hpp"
 #include "utility.hpp"
 #include <ostream>
-#include <cassert>
 #include <iostream>
+#include <cassert>
+#include <cstring>
 
 BitWriter::BitWriter(std::ostream& output):
-    output(output), bit_buffer(0), bit_buffer_size(0) {}
+    output(output) {
+    std::memset(this->bit_buffer.data(), 0, this->bit_buffer.capacity());
+    this->bit_buffer.setSize(this->bit_buffer.capacity());
+}
 
 BitWriter::~BitWriter() {
     this->flush();
@@ -14,12 +18,11 @@ BitWriter::~BitWriter() {
 auto BitWriter::write_bit(uint8_t bit) -> void {
     assert(bit == 0 || bit == 1);
 
-    if (this->bit_buffer_size == bit_size_of<uint8_t>()) {
+    if (this->bit_buffer.full()) {
         this->flush();
     }
 
-    ++this->bit_buffer_size;
-    this->bit_buffer |= bit << (bit_size_of<uint8_t>() - this->bit_buffer_size);
+    this->bit_buffer.pushBit(bit);
 }
 
 auto BitWriter::write_bits(uint64_t value, uint64_t n, std::endian endian) -> void {
@@ -86,9 +89,20 @@ auto BitWriter::write_zeta(uint64_t value, uint8_t k) -> void {
     this->write_minimal_binary(value - (1 << (h * k)), z);
 }
 
+auto BitWriter::write_golomb(uint64_t value, uint8_t b) -> void {
+    if (b == 0)
+        return;
+
+    this->write_unary_with_terminator(value / b, 0);
+    this->write_minimal_binary(value % b, b);
+}
+
 auto BitWriter::flush() -> void {
-    if (this->bit_buffer_size != 0)
-        this->output.write(reinterpret_cast<const char*>(&this->bit_buffer), 1);
-    this->bit_buffer = 0;
-    this->bit_buffer_size = 0;
+    if (!this->bit_buffer.empty()) {
+        size_t bytes = (this->bit_buffer.getOffset() + bit_size_of<uint8_t>() - 1) / bit_size_of<uint8_t>();
+        std::cout << "(flush) bytes = " << bytes << std::endl;
+        this->output.write(reinterpret_cast<const char*>(this->bit_buffer.data()), bytes);
+    }
+    this->bit_buffer.setOffset(0);
+    std::memset(this->bit_buffer.data(), 0, this->bit_buffer.capacity());
 }

@@ -4,12 +4,12 @@
 #include <iosfwd>
 #include <bit>
 #include <cstdint>
+#include "bitbuffer.hpp"
 
 class BitWriter {
     private:
         std::ostream& output;
-        uint8_t bit_buffer;
-        uint8_t bit_buffer_size;
+        BitBuffer<16> bit_buffer;
 
     public:
         BitWriter(std::ostream& output);
@@ -31,6 +31,7 @@ class BitWriter {
         auto write_delta(uint64_t value) -> void;
         auto write_minimal_binary(uint64_t value, uint64_t z) -> void;
         auto write_zeta(uint64_t value, uint8_t k) -> void;
+        auto write_golomb(uint64_t value, uint8_t b) -> void;
 
         auto flush() -> void;
 };

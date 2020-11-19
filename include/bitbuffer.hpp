@@ -104,7 +104,7 @@ auto BitBuffer<Bytes>::stackOffset(size_t idx) const -> size_t {
 
 template <size_t Bytes>
 auto BitBuffer<Bytes>::pushBit(uint8_t bit) -> void {
-    this->setBit(this->stackOffset(this->offset++), bit);
+    this->setBit(this->offset++, bit);
 }
 
 template <size_t Bytes>
