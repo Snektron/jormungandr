@@ -13,6 +13,7 @@ sources = [
     'src/decode/bitreader.cpp',
     'src/decode/property.cpp',
     'src/decode/webgraph.cpp',
+    'src/encode/bitwriter.cpp',
     'src/graph/propertymap.cpp',
     'src/utility.cpp'
 ]

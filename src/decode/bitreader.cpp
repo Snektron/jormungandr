@@ -1,6 +1,7 @@
 #include "decode/bitreader.hpp"
 #include "utility.hpp"
 #include "exceptions.hpp"
+#include <istream>
 #include <climits>
 #include <cassert>
 
@@ -59,6 +60,7 @@ auto BitReader::read_bits(size_t n, std::endian endian) -> uint64_t {
             }
             break;
         default:
+            // Mixed endian
             assert(false);
     }
     return result;

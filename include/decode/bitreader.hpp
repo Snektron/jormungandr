@@ -15,14 +15,19 @@ class BitReader {
     public:
         BitReader(std::istream& input);
 
+        BitReader(const BitReader&) = delete;
+        BitReader& operator=(const BitReader&) = delete;
+
+        BitReader(BitReader&&) = delete;
+        BitReader& operator=(BitReader&&) = delete;
+
         auto at_end() const -> bool;
         auto seek(size_t bit_offset) -> void;
 
         auto peek_bit() -> std::optional<uint8_t>;
         auto read_bit() -> uint8_t;
 
-        // Reads bits in big endian
-        auto read_bits(size_t n, std::endian = std::endian::big) -> uint64_t;
+        auto read_bits(size_t n, std::endian endian = std::endian::big) -> uint64_t;
         auto read_unary(uint8_t bit) -> uint64_t;
         // Also read a terminating bit, (which is !bit)
         auto read_unary_with_terminator(uint8_t bit) -> uint64_t;
