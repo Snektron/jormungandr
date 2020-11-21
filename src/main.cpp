@@ -41,8 +41,8 @@ auto main(int argc, char* argv[]) -> int {
     std::ofstream output = std::ofstream(argv[2]);
 
     auto encoding = EncodingConfig();
-    auto encoder = WebGraphEncoder<node_type>(output, encoding);
-    encoder.encode(graph);
+    auto encoder = WebGraphEncoder<node_type>(output, encoding, graph);
+    encoder.encode();
 
     // auto output = std::stringstream();
     // auto bw = BitWriter(output);
