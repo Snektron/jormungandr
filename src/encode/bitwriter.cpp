@@ -46,13 +46,13 @@ auto BitWriter::write_bits(uint64_t value, uint64_t n, std::endian endian) -> vo
     }
 }
 
-auto BitWriter::write_unary(uint8_t value, uint8_t bit) -> void {
+auto BitWriter::write_unary(uint64_t value, uint8_t bit) -> void {
     for (size_t i = 0; i < value; ++i) {
         this->write_bit(bit);
     }
 }
 
-auto BitWriter::write_unary_with_terminator(uint8_t value, uint8_t bit) -> void {
+auto BitWriter::write_unary_with_terminator(uint64_t value, uint8_t bit) -> void {
     this->write_unary(value, bit);
     this->write_bit(!bit);
 }
@@ -81,7 +81,7 @@ auto BitWriter::write_minimal_binary(uint64_t value, uint64_t z) -> void {
     }
 }
 
-auto BitWriter::write_zeta(uint64_t value, uint8_t k) -> void {
+auto BitWriter::write_zeta(uint64_t value, uint64_t k) -> void {
     ++value; // Correct for not supporting 0
     uint64_t h = (std::bit_width(value) - 1) / k;
     this->write_unary_with_terminator(h, 0);
@@ -89,7 +89,7 @@ auto BitWriter::write_zeta(uint64_t value, uint8_t k) -> void {
     this->write_minimal_binary(value - (1 << (h * k)), z);
 }
 
-auto BitWriter::write_golomb(uint64_t value, uint8_t b) -> void {
+auto BitWriter::write_golomb(uint64_t value, uint64_t b) -> void {
     if (b == 0)
         return;
 

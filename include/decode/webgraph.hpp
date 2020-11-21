@@ -2,36 +2,12 @@
 #define _JORMUNGANDR_DECODE_WEBGRAPH_HPP
 
 #include "decode/bitreader.hpp"
+#include "encoding.hpp"
 #include <vector>
 #include <iosfwd>
 #include <optional>
 #include <span>
 #include <cstdint>
-
-enum class Encoding {
-    DELTA,
-    GAMMA,
-    UNARY,
-    ZETA,
-};
-
-struct EncodingConfig {
-    Encoding block_count_encoding = Encoding::GAMMA;
-    Encoding copy_block_encoding = Encoding::GAMMA;
-    Encoding outdegree_encoding = Encoding::GAMMA;
-    Encoding reference_encoding = Encoding::UNARY;
-    Encoding residual_encoding = Encoding::ZETA;
-
-    // According to the Java source, this is always gamma
-    Encoding interval_count_encoding = Encoding::GAMMA;
-
-    // According to the Java source, this is always gamma
-    Encoding interval_encoding = Encoding::GAMMA;
-
-    uint8_t zeta_k = 3;
-    uint8_t min_interval_size = 2;
-    uint8_t window_size = 7;
-};
 
 class WebGraphDecoder {
     private:

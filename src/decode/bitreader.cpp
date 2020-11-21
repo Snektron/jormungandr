@@ -106,7 +106,7 @@ auto BitReader::read_minimal_binary(uint64_t z) -> uint64_t {
     return x < m ? x : (x << 1) + this->read_bit() - m;
 }
 
-auto BitReader::read_zeta(uint8_t k) -> uint64_t {
+auto BitReader::read_zeta(uint64_t k) -> uint64_t {
     uint64_t h = this->read_unary_with_terminator(0);
     // read minimal binary of [0, 2^(hk + k) - 2^hk - 1]
     uint64_t z = (1 << (h * k + k)) - (1 << (h * k));
@@ -115,7 +115,7 @@ auto BitReader::read_zeta(uint8_t k) -> uint64_t {
     return v - 1;
 }
 
-auto BitReader::read_golomb(uint8_t b) -> uint64_t {
+auto BitReader::read_golomb(uint64_t b) -> uint64_t {
     if (b == 0)
         return 0;
 

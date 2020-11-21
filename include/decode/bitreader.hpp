@@ -34,8 +34,8 @@ class BitReader {
         auto read_gamma() -> uint64_t;
         auto read_delta() -> uint64_t;
         auto read_minimal_binary(uint64_t z) -> uint64_t;
-        auto read_zeta(uint8_t k) -> uint64_t;
-        auto read_golomb(uint8_t b) -> uint64_t;
+        auto read_zeta(uint64_t k) -> uint64_t;
+        auto read_golomb(uint64_t b) -> uint64_t;
 
     private:
         auto discard_buffer_bit() -> void;

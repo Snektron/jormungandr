@@ -14,6 +14,7 @@ sources = [
     'src/decode/property.cpp',
     'src/decode/webgraph.cpp',
     'src/encode/bitwriter.cpp',
+    'src/encode/webgraph.cpp',
     'src/graph/propertymap.cpp',
     'src/utility.cpp'
 ]
