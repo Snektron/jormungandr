@@ -9,6 +9,7 @@
 #include "decode/binary.hpp"
 #include "decode/webgraph.hpp"
 #include "encode/bitwriter.hpp"
+#include "encode/webgraph.hpp"
 
 #include "bitbuffer.hpp"
 
@@ -30,17 +31,30 @@ auto main(int argc, char* argv[]) -> int {
     //     }
     // }
 
-    auto output = std::stringstream();
-    auto bw = BitWriter(output);
-
-    bw.write_zeta(16, 4);
-    bw.flush();
-
-    for (const char x : output.str()) {
-        uint8_t value = *reinterpret_cast<const uint8_t*>(&x);
-        std::cout << std::bitset<8>(value) << ' ';
+    if(argc < 3) {
+        std::cerr << "Not enough arguments given" << std::endl;
+        return EXIT_FAILURE;
     }
-    std::cout << "(" << output.str().size() << ")" << std::endl;
+
+    auto graph = Graph<node_type>();
+
+    std::ofstream output = std::ofstream(argv[2]);
+
+    auto encoding = EncodingConfig();
+    auto encoder = WebGraphEncoder<node_type>(output, encoding);
+    encoder.encode(graph);
+
+    // auto output = std::stringstream();
+    // auto bw = BitWriter(output);
+
+    // bw.write_zeta(16, 4);
+    // bw.flush();
+
+    // for (const char x : output.str()) {
+    //     uint8_t value = *reinterpret_cast<const uint8_t*>(&x);
+    //     std::cout << std::bitset<8>(value) << ' ';
+    // }
+    // std::cout << "(" << output.str().size() << ")" << std::endl;
 
     return EXIT_SUCCESS;
 }
