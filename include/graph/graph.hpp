@@ -65,6 +65,12 @@ Graph<T>::Graph(std::vector<T>&& srcs, std::vector<T>&& dsts) {
     }
 
     this->edges = std::move(srcs);
+
+    for (T i = 0; i < this->node.size(); ++i) {
+        auto [start, len] = this->nodes[i];
+        auto span = std::span(&this->edges[start], len);
+        std::sort(span.begin(), span.end());
+    }
 }
 
 template <std::unsigned_integral T>
@@ -79,7 +85,7 @@ template <std::unsigned_integral T>
 auto Graph<T>::for_each(ForEachNodeCallback<T> auto f) const -> void {
     for (T i = 0; i < this->nodes.size(); ++i) {
         auto [start, len] = this->nodes[i];
-        auto span = std::span(&this->edges[i], len);
+        auto span = std::span(&this->edges[start], len);
         f(i, span);
     }
 }
