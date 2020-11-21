@@ -8,7 +8,7 @@
 #include <cassert>
 
 template <typename F, typename T>
-concept ForEachNeighbourCallback = std::invocable<F, std::span<const T>>;
+concept ForEachNeighbourCallback = std::invocable<F, T>;
 
 template <typename F, typename T>
 concept ForEachNodeCallback = std::invocable<F, T, std::span<const T>>;
