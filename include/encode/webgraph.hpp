@@ -82,6 +82,7 @@ auto WebGraphEncoder<T>::encodeReference(T node, const std::span<const T>& neigh
         neighbours);
 
     this->encodeValue(node - reference, this->encoding_config.reference_encoding);
+
 }
 
 template <typename T>
