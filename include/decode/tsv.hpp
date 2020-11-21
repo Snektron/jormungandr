@@ -1,40 +1,46 @@
 #ifndef _JORMUNGANDR_DECODE_TSV_HPP
 #define _JORMUNGANDR_DECODE_TSV_HPP
 
-#include "decoder.hpp"
-
 #include <iostream>
+#include <concepts>
+#include <vector>
+#include <algorithm>
 
-template <std::unsigned_integral T, char Sep = '\t'>
-class TsvDecoder : public Decoder<T> {
+#include "graph/graph.hpp"
+
+template <std::unsigned_integral T>
+class TsvDecoder {
+    private:
+        std::istream& input;
+        char sep;
+
     public:
-        TsvDecoder(std::istream&);
-        ~TsvDecoder() = default;
-
-        auto decode() -> std::unique_ptr<Graph<T>>;
+        TsvDecoder(std::istream& input, char sep = '\t');
+        auto decode() -> Graph<T>;
 };
 
-template <std::unsigned_integral T, char Sep>
-TsvDecoder<T, Sep>::TsvDecoder(std::istream& input) : Decoder<T>(input) {}
+template <std::unsigned_integral T>
+TsvDecoder<T>::TsvDecoder(std::istream& input, char sep):
+    input(input), sep(sep) {}
 
-template <std::unsigned_integral T, char Sep>
-auto TsvDecoder<T, Sep>::decode() -> std::unique_ptr<Graph<T>> {
-    auto result = std::make_unique<Graph<T>>();
-    while(this->input) {
-        T from;
+template <std::unsigned_integral T>
+auto TsvDecoder<T>::decode() -> Graph<T> {
+    auto srcs = std::vector<T>();
+    auto dsts = std::vector<T>();
+
+    while (this->input) {
+        T src, dst;
         char sep;
-        T to;
 
-        this->input >> from;
-        sep = this->input.get();
-        this->input >> to;
-
-        if(sep != Sep || this->input.fail())
+        this->input >> src >> sep >> dst;
+        if (sep != this->sep || this->input.fail())
             break;
 
-        result->add_edge(from, to);
+        srcs.push_back(src);
+        dsts.push_back(dst);
     }
-    return result;
+
+    return Graph(std::move(srcs), std::move(dsts));
 }
 
 #endif
