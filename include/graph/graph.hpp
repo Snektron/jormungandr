@@ -6,7 +6,7 @@
 #include <span>
 
 template <typename F, typename T>
-concept ForEachNodeCallback = std::invocable<T, std::span<const T>>;
+concept ForEachNodeCallback = std::invocable<F, T, std::span<const T>>;
 
 template <std::unsigned_integral T>
 class Graph {
@@ -19,15 +19,15 @@ class Graph {
     private:
         std::vector<T> edges;
         std::vector<Node> nodes;
-
+    public:
         Graph() = default;
         ~Graph() = default;
 
-        auto for_each(ForEachNodeCallback<T> auto& f) -> void;
+        auto for_each(ForEachNodeCallback<T> auto f) const -> void;
 };
 
 template <std::unsigned_integral T>
-auto Graph<T>::for_each(ForEachNodeCallback<T> auto& f) -> void {
+auto Graph<T>::for_each(ForEachNodeCallback<T> auto f) const -> void {
     for (T i = 0; i < this->nodes.size(); ++i) {
         auto [start, len] = this->nodes[i];
         auto span = std::span(&this->edges[i], len);

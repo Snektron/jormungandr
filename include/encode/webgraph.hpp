@@ -13,25 +13,28 @@ class WebGraphEncoder {
         BitWriter output;
         EncodingConfig encoding_config;
 
-        auto encodeNode(T, const std::span<T>&);
-
+        auto encodeNode(T, const std::span<const T>&);
         auto encodeValue(auto, Encoding) -> void;
     public:
-        WebGraphEncoder(std::ostream& output, const EncodingConfig& encoding_config);
+        WebGraphEncoder(std::ostream&, const EncodingConfig&);
 
         auto encode(const Graph<T>&) -> void;
 };
 
 template <typename T>
+WebGraphEncoder<T>::WebGraphEncoder(std::ostream& output, const EncodingConfig& encoding_config) :
+        output(output), encoding_config(encoding_config) {}
+
+template <typename T>
 auto WebGraphEncoder<T>::encode(const Graph<T>& graph) -> void {
-    graph.for_each([this](T node, const std::span<T>& neighbours) {
+    graph.for_each([this](T node, std::span<const T> neighbours) {
         this->encodeNode(node, neighbours);
     });
 }
 
 template <typename T>
-auto WebGraphEncoder<T>::encodeNode(T node, const std::span<T>& neighbours) {
-    this->writeValue(neighbours.size(), this->encoding_config.outdegree_encoding);
+auto WebGraphEncoder<T>::encodeNode(T node, const std::span<const T>& neighbours) {
+    this->encodeValue(neighbours.size(), this->encoding_config.outdegree_encoding);
 }
 
 template <typename T>
@@ -44,7 +47,7 @@ auto WebGraphEncoder<T>::encodeValue(auto value, Encoding encoding) -> void {
         case Encoding::UNARY:
             return this->output.write_unary_with_terminator(value, 0);
         case Encoding::ZETA:
-            return this->output.write_zeta(value);
+            return this->output.write_zeta(value, this->encoding_config.zeta_k);
         default:
             throw EncodingException("Invalid encoding");
     }
