@@ -2,34 +2,37 @@
 #define _JORMUNGANDR_GRAPH_GRAPH_HPP
 
 #include <vector>
+#include <concepts>
+#include <span>
 
-template <typename T>
-struct Edge {
-    T from;
-    T to;
+template <typename F, typename T>
+concept ForEachNodeCallback = std::invocable<T, std::span<const T>>;
 
-    Edge(T, T);
-
-    auto operator<=>(const Edge&) const -> std::strong_ordering = default;
-};
-
-template <typename T>
+template <std::unsigned_integral T>
 class Graph {
-    private:
-        std::vector<Edge<T>> edges;
     public:
+        struct Node {
+            size_t first_edge;
+            size_t num_edges;
+        };
+
+    private:
+        std::vector<T> edges;
+        std::vector<Node> nodes;
+
         Graph() = default;
         ~Graph() = default;
 
-        auto add_edge(T, T) -> void;
+        auto for_each(ForEachNodeCallback<T> auto& f) -> void;
 };
 
-template <typename T>
-Edge<T>::Edge(T from, T to) : from(from), to(to) {}
-
-template <typename T>
-auto Graph<T>::add_edge(T from, T to) -> void {
-    this->edges.emplace_back(from, to);
+template <std::unsigned_integral T>
+auto Graph<T>::for_each(ForEachNodeCallback<T> auto& f) -> void {
+    for (T i = 0; i < this->nodes.size(); ++i) {
+        auto [start, len] = this->nodes[i];
+        auto span = std::span(&this->edges[i], len);
+        f(i, span);
+    }
 }
 
 #endif
