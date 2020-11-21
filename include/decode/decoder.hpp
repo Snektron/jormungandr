@@ -1,7 +1,6 @@
 #ifndef _JORMUNGANDR_DECODE_DECODER_HPP
 #define _JORMUNGANDR_DECODE_DECODER_HPP
 
-#include <memory>
 #include <iosfwd>
 #include <concepts>
 

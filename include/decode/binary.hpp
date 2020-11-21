@@ -4,33 +4,40 @@
 #include "decode/decoder.hpp"
 
 template <std::unsigned_integral T>
-class BinaryDecoder : public Decoder<T> {
+class BinaryDecoder {
+    private:
+        std::istream& input;
+
     public:
-        BinaryDecoder(std::istream&);
+        BinaryDecoder(std::istream& input);
         ~BinaryDecoder() = default;
 
-        auto decode() -> std::unique_ptr<Graph<T>>;
+        auto decode() -> Graph<T>;
 };
 
 template <std::unsigned_integral T>
-BinaryDecoder<T>::BinaryDecoder(std::istream& input) : Decoder<T>(input) {}
+BinaryDecoder<T>::BinaryDecoder(std::istream& input): input(input) {}
 
 template <std::unsigned_integral T>
-auto BinaryDecoder<T>::decode() -> std::unique_ptr<Graph<T>> {
-    auto result = std::make_unique<Graph<T>>();
-    while(this->input) {
-        T from;
-        T to;
+auto BinaryDecoder<T>::decode() -> Graph<T> {
+    auto srcs = std::vector<T>();
+    auto dsts = std::vector<T>();
 
-        this->input.read(reinterpret_cast<char*>(&from), sizeof from);
-        this->input.read(reinterpret_cast<char*>(&to), sizeof to);
+    while (this->input) {
+        T src;
+        T dst;
 
-        if(this->input.fail())
+        this->input.read(reinterpret_cast<char*>(&src), sizeof src);
+        this->input.read(reinterpret_cast<char*>(&dst), sizeof dst);
+
+        if (this->input.fail())
             break;
 
-        result->addEdge(from, to);
+        srcs.push_back(src);
+        dsts.push_back(dst);
     }
-    return result;
+
+    return Graph(std::move(srcs), std::move(dsts));
 }
 
 #endif
