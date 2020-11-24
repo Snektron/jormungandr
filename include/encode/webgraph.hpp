@@ -205,7 +205,7 @@ auto WebGraphEncoder<T>::encodeRemaining(T node, const std::vector<T>& nodes) ->
 
     auto prev_node = nodes[0];
     for(size_t i = 1; i < nodes.size(); ++i) {
-        this->encodeValue(nodes[i] - prev_node, this->encoding_config.residual_encoding);
+        this->encodeValue(nodes[i] - prev_node - 1, this->encoding_config.residual_encoding);
         prev_node = nodes[i];
     }
 }
