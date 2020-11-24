@@ -123,8 +123,10 @@ auto WebGraphEncoder<T>::encodeNode(T node, const std::span<const T>& neighbours
 
 template <typename T>
 auto WebGraphEncoder<T>::encodeReference(T node, const std::span<const T>& neighbours) -> std::vector<T> {
-    auto reference = this->findMostOverlapping(node - this->encoding_config.window_size,
-        this->encoding_config.window_size,
+    auto min_offset = node < this->encoding.window_size ? 0 : node - this->encoding.window_size;
+    auto reference = this->findMostOverlapping(
+        min_offset,
+        node - min_offset,
         neighbours);
 
     this->encodeValue(node - reference, this->encoding_config.reference_encoding);
