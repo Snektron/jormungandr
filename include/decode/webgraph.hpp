@@ -4,6 +4,7 @@
 #include "decode/bitreader.hpp"
 #include "encoding.hpp"
 #include "exceptions.hpp"
+#include "graph/graph.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -24,11 +25,12 @@ class WebGraphDecoder {
     public:
         struct Node {
             T index;
-            std::span<const T> neighbors;
+            std::span<const T> neighbours;
         };
 
         WebGraphDecoder(std::istream& input, T num_nodes, EncodingConfig encoding_config);
         auto next_node() -> std::optional<Node>;
+        auto decode() -> Graph<T>;
 
     private:
         auto decode_reference_list(T index, std::vector<T>& to) -> void;
@@ -50,29 +52,42 @@ auto WebGraphDecoder<T>::next_node() -> std::optional<Node> {
     }
 
     T index = this->next_node_index++;
-    auto& neighbors = this->window[index % this->window.size()];
-    neighbors.clear();
+    auto& neighbours = this->window[index % this->window.size()];
+    neighbours.clear();
 
     T out_degree = this->decode_value(this->encoding_config.outdegree_encoding);
     if (out_degree == 0)
         return {{index, {}}};
 
-
     if (this->encoding_config.window_size > 0) {
-        this->decode_reference_list(index, neighbors);
+        this->decode_reference_list(index, neighbours);
     }
 
-    if (this->encoding_config.min_interval_size > 0 && neighbors.size() < out_degree) {
-        this->decode_interval_list(index, neighbors);
+    if (this->encoding_config.min_interval_size > 0 && neighbours.size() < out_degree) {
+        this->decode_interval_list(index, neighbours);
     }
 
-    if (neighbors.size() < out_degree) {
-        this->decode_residual_list(index, out_degree - neighbors.size(), neighbors);
+    if (neighbours.size() < out_degree) {
+        this->decode_residual_list(index, out_degree - neighbours.size(), neighbours);
     }
 
-    std::sort(neighbors.begin(), neighbors.end());
+    std::sort(neighbours.begin(), neighbours.end());
 
-    return {{index, neighbors}};
+    return {{index, neighbours}};
+}
+
+template <typename T>
+auto WebGraphDecoder<T>::decode() -> Graph<T> {
+    auto nodes = std::vector<typename Graph<T>::Node>(this->num_nodes, {0, 0});
+    auto edges = std::vector<T>();
+
+    while (auto node = this->next_node()) {
+        nodes[node->index].first_edge = edges.size();
+        nodes[node->index].num_edges = node->neighbours.size();
+        std::copy(node->neighbours.begin(), node->neighbours.end(), std::back_inserter(edges));
+    }
+
+    return Graph<T>(std::move(nodes), std::move(edges));
 }
 
 template <typename T>

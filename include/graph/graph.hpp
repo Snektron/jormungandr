@@ -26,6 +26,7 @@ class Graph {
         std::vector<Node> nodes;
     public:
         Graph() = default;
+        Graph(std::vector<Node>&& nodes, std::vector<T>&& edges);
         Graph(std::vector<T>&& srcs, std::vector<T>&& dsts);
         ~Graph() = default;
 
@@ -33,6 +34,10 @@ class Graph {
         auto for_each(ForEachNodeCallback<T> auto f) const -> void;
         auto num_nodes() const -> size_t;
 };
+
+template <std::unsigned_integral T>
+Graph<T>::Graph(std::vector<Node>&& nodes, std::vector<T>&& edges):
+    edges(std::move(edges)), nodes(std::move(nodes)) {}
 
 template <std::unsigned_integral T>
 Graph<T>::Graph(std::vector<T>&& srcs, std::vector<T>&& dsts) {

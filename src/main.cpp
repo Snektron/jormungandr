@@ -15,6 +15,15 @@
 
 using node_type = uint32_t;
 
+auto dump_graph(const Graph<node_type>& g) {
+    g.for_each([](node_type src, std::span<const node_type> neighbours) {
+        std::cout << src << ": out_degree = " << neighbours.size() << std::endl;
+        for (const auto dst : neighbours) {
+            std::cout << src << " -> " << dst << std::endl;
+        }
+    });
+}
+
 auto main(int argc, char* argv[]) -> int {
     try {
         if (argc < 3) {
@@ -24,13 +33,7 @@ auto main(int argc, char* argv[]) -> int {
 
         auto in = std::ifstream(argv[1]);
         auto original = TsvDecoder<node_type>(in).decode();
-
-        original.for_each([](node_type src, std::span<const node_type> neighbors) {
-            std::cout << src << ": out_degree = " << neighbors.size() << std::endl;
-            for (const auto dst : neighbors) {
-                std::cout << src << " -> " << dst << std::endl;
-            }
-        });
+        dump_graph(original);
 
         std::cout << "-----------" << std::endl;
 
@@ -45,13 +48,9 @@ auto main(int argc, char* argv[]) -> int {
         file_out.flush();
         file_out.close();
 
-        auto decoder = WebGraphDecoder(ss, original.num_nodes(), encoding);
-        while (auto node = decoder.next_node()) {
-            std::cout << node.value().index << ": out_degree = " << node.value().neighbors.size() << std::endl;
-            for (const auto n : node.value().neighbors) {
-                std::cout << node.value().index << " -> " << n << std::endl;
-            }
-        }
+        auto decoder = WebGraphDecoder<node_type>(ss, original.num_nodes(), encoding);
+        auto decoded = decoder.decode();
+        dump_graph(decoded);
 
         return EXIT_SUCCESS;
     }
