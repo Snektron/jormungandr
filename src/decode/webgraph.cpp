@@ -74,15 +74,15 @@ auto WebGraphDecoder::read_interval_list(uint64_t index, std::vector<uint64_t>& 
         return;
     }
 
-    auto interval_count_encoding = this->encoding_config.interval_count_encoding;
+    auto interval_encoding = this->encoding_config.interval_encoding;
 
     uint64_t prev = 0;
     for (uint64_t i = 0; i < intervals; ++i) {
         uint64_t left_extreme = i == 0 ?
-            this->read_maybe_negative(index, interval_count_encoding) :
-            this->read_value(interval_count_encoding) + prev;
+            this->read_maybe_negative(index, interval_encoding) :
+            this->read_value(interval_encoding) + prev;
 
-        uint64_t length = this->read_value(interval_count_encoding) + this->encoding_config.min_interval_size;
+        uint64_t length = this->read_value(interval_encoding) + this->encoding_config.min_interval_size;
 
         prev = left_extreme + length + 1;
 

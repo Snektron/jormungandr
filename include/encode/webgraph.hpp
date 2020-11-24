@@ -21,6 +21,8 @@ class WebGraphEncoder {
         auto encodeNode(T, const std::span<const T>&) -> void;
         auto encodeReference(T, const std::span<const T>&) -> void;
         auto encodeValue(auto, Encoding) -> void;
+        auto encode_interval_list(T index, std::vector<T>& nodes) -> void;
+        auto encode_maybe_negative(T value, T index, Encoding encoding) -> void;
     public:
         WebGraphEncoder(std::ostream&, const EncodingConfig&, const Graph<T>&);
 
@@ -122,6 +124,64 @@ auto WebGraphEncoder<T>::encodeReference(T node, const std::span<const T>& neigh
 
     for(size_t i = 1; i < blocks.size(); ++i)
         this->encodeValue(blocks[i] - 1, this->encoding_config.copy_block_encoding);
+}
+
+template <typename T>
+auto WebGraphEncoder<T>::encode_interval_list(T index, std::vector<T>& nodes) -> void {
+    auto interval_length = [](const auto& v, size_t i) {
+        size_t j = i;
+        auto k = v[i];
+        while (++j < v.size() && v[j] == ++k);
+        return j - i;
+    };
+
+    uint64_t intervals = 0;
+    for (size_t i = 0; i < nodes.size();) {
+        size_t length = interval_length(nodes, i);
+        if (length >= this->encoding_config.min_interval_size) {
+            ++intervals;
+        }
+        i += length;
+    }
+
+    this->encodeValue(intervals, this->encoding_config.interval_count_encoding);
+    if (intervals == 0) {
+        return;
+    }
+
+    auto interval_encoding = this->encoding_config.interval_encoding;
+    uint64_t prev = 0;
+    uint64_t prev_len = 0;
+    bool is_first = true;
+    for (size_t i = 0; i < nodes.size();) {
+        auto node = nodes[i];
+        size_t length = interval_length(nodes, i);
+        i += length;
+        if (length < this->encoding_config.min_interval_size) {
+            continue;
+        }
+
+        if (is_first) {
+            this->encode_maybe_negative(node, index, interval_encoding);
+            is_first = false;
+        } else {
+            uint64_t left_extreme = node - prev - prev_len - 1;
+            this->encodeValue(left_extreme, interval_encoding);
+        }
+        this->encodeValue(length - this->encoding_config.min_interval_size, interval_encoding);
+
+        prev = node;
+        prev_len = length;
+    }
+}
+
+template <typename T>
+auto WebGraphEncoder<T>::encode_maybe_negative(T value, T index, Encoding encoding) -> void {
+    if (value >= index) {
+        this->encodeValue((value - index) * 2, encoding);
+    } else {
+        this->encodeValue(2 * (index - value) - 1);
+    }
 }
 
 template <typename T>
