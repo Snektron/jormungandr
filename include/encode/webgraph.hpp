@@ -20,6 +20,7 @@ class WebGraphEncoder {
 
         auto encodeNode(T, const std::span<const T>&) -> void;
         auto encodeReference(T, const std::span<const T>&) -> std::vector<T>;
+        auto encodeRemaining(T, const std::vector<T>&) -> void;
         auto encodeValue(auto, Encoding) -> void;
         auto encode_interval_list(T index, std::vector<T>& nodes) -> void;
         auto encode_maybe_negative(T value, T index, Encoding encoding) -> void;
@@ -112,6 +113,8 @@ auto WebGraphEncoder<T>::encodeNode(T node, const std::span<const T>& neighbours
     auto remaining = this->encoding_config.window_size > 0 ?
                         this->encodeReference(node, neighbours) :
                         std::vector<T>(neighbours.begin(), neighbours.end());
+
+    this->encodeRemaining(node, remaining);
 }
 
 template <typename T>
@@ -194,11 +197,25 @@ auto WebGraphEncoder<T>::encode_interval_list(T index, std::vector<T>& nodes) ->
 }
 
 template <typename T>
+auto WebGraphEncoder<T>::encodeRemaining(T node, const std::vector<T>& nodes) -> void {
+    if(nodes.size() == 0)
+        return;
+
+    this->encode_maybe_negative(nodes[0], node, this->encoding_config.residual_encoding);
+
+    auto prev_node = nodes[0];
+    for(size_t i = 1; i < nodes.size(); ++i) {
+        this->encodeValue(nodes[i] - prev_node, this->encoding_config.residual_encoding);
+        prev_node = nodes[i];
+    }
+}
+
+template <typename T>
 auto WebGraphEncoder<T>::encode_maybe_negative(T value, T index, Encoding encoding) -> void {
     if (value >= index) {
         this->encodeValue((value - index) * 2, encoding);
     } else {
-        this->encodeValue(2 * (index - value) - 1);
+        this->encodeValue(2 * (index - value) - 1, encoding);
     }
 }
 
