@@ -36,6 +36,9 @@ class Graph {
 template <std::unsigned_integral T>
 Graph<T>::Graph(std::vector<T>&& srcs, std::vector<T>&& dsts) {
     assert(srcs.size() == dsts.size());
+    if (srcs.size() == 0)
+        return;
+
     size_t total_nodes = 0;
     for (size_t i = 0; i < srcs.size(); ++i) {
         total_nodes = srcs[i] > total_nodes ? srcs[i] : total_nodes;
@@ -44,12 +47,12 @@ Graph<T>::Graph(std::vector<T>&& srcs, std::vector<T>&& dsts) {
     ++total_nodes;
 
     this->nodes.resize(total_nodes, {0, 0});
-    for (auto& edge : edges) {
-        ++nodes[edge.dst].num_edges;
+    for (auto& src : srcs) {
+        ++this->nodes[src].num_edges;
     }
 
     size_t offset = 0;
-    for (auto& node : nodes) {
+    for (auto& node : this->nodes) {
         node.first_edge = offset;
         offset += node.num_edges;
     }
@@ -60,13 +63,13 @@ Graph<T>::Graph(std::vector<T>&& srcs, std::vector<T>&& dsts) {
         return srcs[i] < srcs[j];
     });
 
+    // Re-use edge list
+    this->edges = std::move(srcs);
     for (size_t i = 0; i < indices.size(); ++i) {
-        srcs[i] = dsts[indices[i]];
+        this->edges[i] = dsts[indices[i]];
     }
 
-    this->edges = std::move(srcs);
-
-    for (T i = 0; i < this->node.size(); ++i) {
+    for (T i = 0; i < this->nodes.size(); ++i) {
         auto [start, len] = this->nodes[i];
         auto span = std::span(&this->edges[start], len);
         std::sort(span.begin(), span.end());

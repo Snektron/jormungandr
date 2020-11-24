@@ -30,9 +30,10 @@ auto TsvDecoder<T>::decode() -> Graph<T> {
 
     while (this->input) {
         T src, dst;
-        char sep;
 
-        this->input >> src >> sep >> dst;
+        this->input >> src;
+        char sep = this->input.get();
+        this->input >> dst;
         if (sep != this->sep || this->input.fail())
             break;
 
