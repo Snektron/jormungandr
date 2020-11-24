@@ -16,10 +16,10 @@ class WebGraphEncoder {
         const Graph<T>& graph;
 
         auto findMostOverlapping(T node, T size, const std::span<const T>&) -> T;
-        auto findCopyBlocks(const std::span<const T>&, T) -> std::vector<size_t>;
+        auto findCopyBlocks(const std::span<const T>&, T, std::vector<T>&) -> std::vector<size_t>;
 
         auto encodeNode(T, const std::span<const T>&) -> void;
-        auto encodeReference(T, const std::span<const T>&) -> void;
+        auto encodeReference(T, const std::span<const T>&) -> std::vector<T>;
         auto encodeValue(auto, Encoding) -> void;
         auto encode_interval_list(T index, std::vector<T>& nodes) -> void;
         auto encode_maybe_negative(T value, T index, Encoding encoding) -> void;
@@ -69,7 +69,8 @@ auto WebGraphEncoder<T>::findMostOverlapping(T node, T size, const std::span<con
 }
 
 template <typename T>
-auto WebGraphEncoder<T>::findCopyBlocks(const std::span<const T>& neighbours, T ref_node) -> std::vector<size_t> {
+auto WebGraphEncoder<T>::findCopyBlocks(const std::span<const T>& neighbours, T ref_node,
+                                        std::vector<T>& copied) -> std::vector<size_t> {
     auto result = std::vector<size_t>();
     auto copy = true;
 
@@ -79,8 +80,13 @@ auto WebGraphEncoder<T>::findCopyBlocks(const std::span<const T>& neighbours, T 
         while(vec_idx < neighbours.size() && neighbours[vec_idx] < ref_neighbour)
             ++vec_idx;
 
-        if(vec_idx >= neighbours.size())
+        if(vec_idx >= neighbours.size()) {
+            if(copy) {
+                copy = false;
+                result.push_back(current_size);
+            }
             return;
+        }
 
         if((neighbours[vec_idx] == ref_neighbour) != copy) {
             copy = !copy;
@@ -88,8 +94,12 @@ auto WebGraphEncoder<T>::findCopyBlocks(const std::span<const T>& neighbours, T 
             current_size = 0;
         }
 
+        if(copy)
+            copied.push_back(ref_neighbour);
+
         ++current_size;
     });
+
     return result;
 }
 
@@ -99,31 +109,39 @@ auto WebGraphEncoder<T>::encodeNode(T node, const std::span<const T>& neighbours
     if(neighbours.size() == 0)
         return;
 
-    if(this->encoding_config.window_size > 0) {
-        this->encodeReference(node, neighbours);
-    }
+    auto remaining = this->encoding_config.window_size > 0 ?
+                        this->encodeReference(node, neighbours) :
+                        std::vector<T>(neighbours.begin(), neighbours.end());
 }
 
 template <typename T>
-auto WebGraphEncoder<T>::encodeReference(T node, const std::span<const T>& neighbours) -> void {
+auto WebGraphEncoder<T>::encodeReference(T node, const std::span<const T>& neighbours) -> std::vector<T> {
     auto reference = this->findMostOverlapping(node - this->encoding_config.window_size,
         this->encoding_config.window_size,
         neighbours);
 
     this->encodeValue(node - reference, this->encoding_config.reference_encoding);
     if(reference == node)
-        return;
+        return std::vector<T>(neighbours.begin(), neighbours.end());
 
-    auto blocks = this->findCopyBlocks(neighbours, reference);
+    auto copied = std::vector<T>();
+    auto blocks = this->findCopyBlocks(neighbours, reference, copied);
     this->encodeValue(blocks.size(), this->encoding_config.block_count_encoding);
 
-    if(blocks.size() == 0)
-        return;
+    auto result = std::vector<T>();
+    size_t copied_idx = 0;
+    for(size_t i = 0; i < neighbours.size(); ++i) {
+        while(copied_idx < copied.size() && copied[copied_idx] < neighbours[i])
+            ++copied_idx;
+        if(copied_idx >= copied.size() || copied[copied_idx] == neighbours[i])
+            result.push_back(neighbours[i]);
+    }
 
     this->encodeValue(blocks[0], this->encoding_config.copy_block_encoding);
-
     for(size_t i = 1; i < blocks.size(); ++i)
         this->encodeValue(blocks[i] - 1, this->encoding_config.copy_block_encoding);
+
+    return result;
 }
 
 template <typename T>
