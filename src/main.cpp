@@ -24,6 +24,15 @@ auto main(int argc, char* argv[]) -> int {
     auto in = std::ifstream(argv[1]);
     auto original = TsvDecoder<node_type>(in).decode();
 
+    original.for_each([](node_type src, std::span<const node_type> neighbors) {
+        std::cout << src << ": out_degree = " << neighbors.size() << std::endl;
+        for (const auto dst : neighbors) {
+            std::cout << src << " -> " << dst << std::endl;
+        }
+    });
+
+    std::cout << "-----------" << std::endl;
+
     auto ss = std::stringstream();
     auto encoding = EncodingConfig();
     auto encoder = WebGraphEncoder<node_type>(ss, encoding, original);

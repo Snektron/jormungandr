@@ -58,7 +58,7 @@ Graph<T>::Graph(std::vector<T>&& srcs, std::vector<T>&& dsts) {
         offset += node.num_edges;
     }
 
-    auto indices = std::vector<size_t>(total_nodes);
+    auto indices = std::vector<size_t>(srcs.size());
     std::iota(indices.begin(), indices.end(), 0);
     std::sort(indices.begin(), indices.end(), [&](size_t i, size_t j) {
         return srcs[i] < srcs[j];
