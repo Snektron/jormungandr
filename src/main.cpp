@@ -16,8 +16,8 @@
 using node_type = uint32_t;
 
 auto main(int argc, char* argv[]) -> int {
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <graph.tsv>" << std::endl;
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " <graph.tsv> <webgraph.out>" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -28,6 +28,10 @@ auto main(int argc, char* argv[]) -> int {
     auto encoding = EncodingConfig();
     auto encoder = WebGraphEncoder<node_type>(ss, encoding, original);
     encoder.encode();
+
+    auto file_out = std::ofstream(argv[2], std::ios::binary);
+    file_out << ss.rdbuf();
+    ss.seekg(0);
 
     auto decoder = WebGraphDecoder(ss, original.num_nodes(), encoding);
     while (auto node = decoder.next_node()) {
