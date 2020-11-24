@@ -24,6 +24,23 @@ auto dump_graph(const Graph<node_type>& g) {
     });
 }
 
+auto graph_eql(const Graph<node_type>& a, const Graph<node_type>& b) {
+    if (a.num_nodes() != b.num_nodes()) {
+        return false;
+    }
+
+    for (node_type i = 0; i < a.num_nodes(); ++i) {
+        auto na = a.neighbours(i);
+        auto nb = b.neighbours(i);
+
+        if (!std::equal(na.begin(), na.end(), nb.begin(), nb.end())) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 auto main(int argc, char* argv[]) -> int {
     try {
         if (argc < 3) {
@@ -33,9 +50,9 @@ auto main(int argc, char* argv[]) -> int {
 
         auto in = std::ifstream(argv[1]);
         auto original = TsvDecoder<node_type>(in).decode();
-        dump_graph(original);
+        // dump_graph(original);
 
-        std::cout << "-----------" << std::endl;
+        // std::cout << "-----------" << std::endl;
 
         auto ss = std::stringstream();
         auto encoding = EncodingConfig();
@@ -50,11 +67,12 @@ auto main(int argc, char* argv[]) -> int {
 
         auto decoder = WebGraphDecoder<node_type>(ss, original.num_nodes(), encoding);
         auto decoded = decoder.decode();
-        dump_graph(decoded);
+        // dump_graph(decoded);
+
+        std::cout << "Graphs are " << (graph_eql(original, decoded) ? "" : "not ") << "equal" << std::endl;
 
         return EXIT_SUCCESS;
-    }
-    catch(const std::runtime_error& err) {
+    } catch(const std::runtime_error& err) {
         std::cerr << "Exception occurred: " << err.what() << std::endl;
         return EXIT_FAILURE;
     }

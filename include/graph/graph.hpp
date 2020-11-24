@@ -32,6 +32,7 @@ class Graph {
 
         auto for_each_neighbour(T node, ForEachNeighbourCallback<T> auto f) const -> void;
         auto for_each(ForEachNodeCallback<T> auto f) const -> void;
+        auto neighbours(T node) const -> std::span<const T>;
         auto num_nodes() const -> size_t;
 };
 
@@ -93,10 +94,14 @@ auto Graph<T>::for_each_neighbour(T node, ForEachNeighbourCallback<T> auto f) co
 template <std::unsigned_integral T>
 auto Graph<T>::for_each(ForEachNodeCallback<T> auto f) const -> void {
     for (T i = 0; i < this->nodes.size(); ++i) {
-        auto [start, len] = this->nodes[i];
-        auto span = std::span(&this->edges[start], len);
-        f(i, span);
+        f(i, this->neighbours(i));
     }
+}
+
+template <std::unsigned_integral T>
+auto Graph<T>::neighbours(T node) const -> std::span<const T> {
+    auto [start, len] = this->nodes[node];
+    return std::span<const T>(&this->edges[start], len);
 }
 
 template <std::unsigned_integral T>
