@@ -40,6 +40,7 @@ auto WebGraphEncoder<T>::encode() -> void {
     this->graph.for_each([this](T node, std::span<const T> neighbours) {
         this->encodeNode(node, neighbours);
     });
+    this->output.flush();
 }
 
 template <typename T>
