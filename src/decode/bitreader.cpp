@@ -28,7 +28,7 @@ auto BitReader::peek_bit() -> std::optional<uint8_t> {
     if(this->buffer.empty() && !this->refill_buffer())
         return std::nullopt;
 
-    return this->buffer.topBit();
+    return this->buffer.top_bit();
 }
 
 auto BitReader::read_bit() -> uint8_t {
@@ -124,7 +124,7 @@ auto BitReader::read_golomb(uint64_t b) -> uint64_t {
 }
 
 auto BitReader::discard_buffer_bit() -> void {
-    this->buffer.popBit();
+    this->buffer.pop_bit();
 
     // Refill if required
     // Also trigger eofbit when called from `read_bit`
@@ -137,7 +137,7 @@ auto BitReader::refill_buffer() -> bool {
     this->input.read(reinterpret_cast<char*>(this->buffer.data()),
                         this->buffer.capacity());
     auto bytes_read = this->input.gcount();
-    this->buffer.setOffset(bytes_read * bit_size_of<uint8_t>());
-    this->buffer.setSize(bytes_read);
+    this->buffer.set_offset(bytes_read * bit_size_of<uint8_t>());
+    this->buffer.set_size(bytes_read);
     return bytes_read != 0;
 }

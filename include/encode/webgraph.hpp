@@ -17,13 +17,13 @@ class WebGraphEncoder {
         EncodingConfig encoding_config;
         const Graph<T>& graph;
 
-        auto findMostOverlapping(T node, const std::span<const T>&) -> std::optional<T>;
-        auto findCopyBlocks(const std::span<const T>&, T, std::vector<T>&) -> std::vector<size_t>;
+        auto find_most_overlapping(T node, const std::span<const T>&) -> std::optional<T>;
+        auto find_copy_blocks(const std::span<const T>&, T, std::vector<T>&) -> std::vector<size_t>;
 
-        auto encodeNode(T, const std::span<const T>&) -> void;
-        auto encodeReference(T, const std::span<const T>&) -> std::vector<T>;
-        auto encodeRemaining(T, const std::vector<T>&) -> void;
-        auto encodeValue(auto, Encoding) -> void;
+        auto encode_node(T, const std::span<const T>&) -> void;
+        auto encode_reference_list(T, const std::span<const T>&) -> std::vector<T>;
+        auto encode_remaining(T, const std::vector<T>&) -> void;
+        auto encode_value(auto, Encoding) -> void;
         auto encode_interval_list(T index, std::vector<T>& nodes) -> void;
         auto encode_maybe_negative(T value, T index, Encoding encoding) -> void;
     public:
@@ -40,13 +40,13 @@ WebGraphEncoder<T>::WebGraphEncoder(std::ostream& output, const EncodingConfig& 
 template <typename T>
 auto WebGraphEncoder<T>::encode() -> void {
     this->graph.for_each([this](T node, std::span<const T> neighbours) {
-        this->encodeNode(node, neighbours);
+        this->encode_node(node, neighbours);
     });
     this->output.flush();
 }
 
 template <typename T>
-auto WebGraphEncoder<T>::findMostOverlapping(T node, const std::span<const T>& neighbours) -> std::optional<T> {
+auto WebGraphEncoder<T>::find_most_overlapping(T node, const std::span<const T>& neighbours) -> std::optional<T> {
     auto best_node = std::optional<T>(std::nullopt);
     auto best_score = size_t{0};
 
@@ -77,7 +77,7 @@ auto WebGraphEncoder<T>::findMostOverlapping(T node, const std::span<const T>& n
 }
 
 template <typename T>
-auto WebGraphEncoder<T>::findCopyBlocks(const std::span<const T>& neighbours, T ref_node,
+auto WebGraphEncoder<T>::find_copy_blocks(const std::span<const T>& neighbours, T ref_node,
                                         std::vector<T>& copied) -> std::vector<size_t> {
     auto result = std::vector<size_t>();
     auto copy = true;
@@ -112,33 +112,33 @@ auto WebGraphEncoder<T>::findCopyBlocks(const std::span<const T>& neighbours, T 
 }
 
 template <typename T>
-auto WebGraphEncoder<T>::encodeNode(T node, const std::span<const T>& neighbours) -> void {
-    this->encodeValue(neighbours.size(), this->encoding_config.outdegree_encoding);
+auto WebGraphEncoder<T>::encode_node(T node, const std::span<const T>& neighbours) -> void {
+    this->encode_value(neighbours.size(), this->encoding_config.outdegree_encoding);
     if(neighbours.size() == 0)
         return;
 
     auto remaining = this->encoding_config.window_size > 0 ?
-        this->encodeReference(node, neighbours) :
+        this->encode_reference_list(node, neighbours) :
         std::vector<T>(neighbours.begin(), neighbours.end());
 
     this->encode_interval_list(node, remaining);
-    this->encodeRemaining(node, remaining);
+    this->encode_remaining(node, remaining);
 }
 
 template <typename T>
-auto WebGraphEncoder<T>::encodeReference(T node, const std::span<const T>& neighbours) -> std::vector<T> {
-    auto maybe_reference = this->findMostOverlapping(node, neighbours);
+auto WebGraphEncoder<T>::encode_reference_list(T node, const std::span<const T>& neighbours) -> std::vector<T> {
+    auto maybe_reference = this->find_most_overlapping(node, neighbours);
     if (!maybe_reference.has_value()) {
-        this->encodeValue(0, this->encoding_config.reference_encoding);
+        this->encode_value(0, this->encoding_config.reference_encoding);
         return std::vector<T>(neighbours.begin(), neighbours.end());
     }
 
     auto reference = *maybe_reference;
-    this->encodeValue(node - reference, this->encoding_config.reference_encoding);
+    this->encode_value(node - reference, this->encoding_config.reference_encoding);
 
     auto copied = std::vector<T>();
-    auto blocks = this->findCopyBlocks(neighbours, reference, copied);
-    this->encodeValue(blocks.size(), this->encoding_config.block_count_encoding);
+    auto blocks = this->find_copy_blocks(neighbours, reference, copied);
+    this->encode_value(blocks.size(), this->encoding_config.block_count_encoding);
 
     auto result = std::vector<T>();
     size_t copied_idx = 0;
@@ -149,9 +149,9 @@ auto WebGraphEncoder<T>::encodeReference(T node, const std::span<const T>& neigh
             result.push_back(neighbours[i]);
     }
 
-    this->encodeValue(blocks[0], this->encoding_config.copy_block_encoding);
+    this->encode_value(blocks[0], this->encoding_config.copy_block_encoding);
     for(size_t i = 1; i < blocks.size(); ++i)
-        this->encodeValue(blocks[i] - 1, this->encoding_config.copy_block_encoding);
+        this->encode_value(blocks[i] - 1, this->encoding_config.copy_block_encoding);
 
     return result;
 }
@@ -174,7 +174,7 @@ auto WebGraphEncoder<T>::encode_interval_list(T index, std::vector<T>& nodes) ->
         i += length;
     }
 
-    this->encodeValue(intervals, this->encoding_config.interval_count_encoding);
+    this->encode_value(intervals, this->encoding_config.interval_count_encoding);
     if (intervals == 0) {
         return;
     }
@@ -196,9 +196,9 @@ auto WebGraphEncoder<T>::encode_interval_list(T index, std::vector<T>& nodes) ->
             is_first = false;
         } else {
             uint64_t left_extreme = node - prev - prev_len - 1;
-            this->encodeValue(left_extreme, interval_encoding);
+            this->encode_value(left_extreme, interval_encoding);
         }
-        this->encodeValue(length - this->encoding_config.min_interval_size, interval_encoding);
+        this->encode_value(length - this->encoding_config.min_interval_size, interval_encoding);
 
         prev = node;
         prev_len = length;
@@ -216,7 +216,7 @@ auto WebGraphEncoder<T>::encode_interval_list(T index, std::vector<T>& nodes) ->
 }
 
 template <typename T>
-auto WebGraphEncoder<T>::encodeRemaining(T node, const std::vector<T>& nodes) -> void {
+auto WebGraphEncoder<T>::encode_remaining(T node, const std::vector<T>& nodes) -> void {
     if(nodes.size() == 0)
         return;
 
@@ -224,7 +224,7 @@ auto WebGraphEncoder<T>::encodeRemaining(T node, const std::vector<T>& nodes) ->
 
     auto prev_node = nodes[0];
     for(size_t i = 1; i < nodes.size(); ++i) {
-        this->encodeValue(nodes[i] - prev_node - 1, this->encoding_config.residual_encoding);
+        this->encode_value(nodes[i] - prev_node - 1, this->encoding_config.residual_encoding);
         prev_node = nodes[i];
     }
 }
@@ -232,14 +232,14 @@ auto WebGraphEncoder<T>::encodeRemaining(T node, const std::vector<T>& nodes) ->
 template <typename T>
 auto WebGraphEncoder<T>::encode_maybe_negative(T value, T index, Encoding encoding) -> void {
     if (value >= index) {
-        this->encodeValue((value - index) * 2, encoding);
+        this->encode_value((value - index) * 2, encoding);
     } else {
-        this->encodeValue(2 * (index - value) - 1, encoding);
+        this->encode_value(2 * (index - value) - 1, encoding);
     }
 }
 
 template <typename T>
-auto WebGraphEncoder<T>::encodeValue(auto value, Encoding encoding) -> void {
+auto WebGraphEncoder<T>::encode_value(auto value, Encoding encoding) -> void {
     switch(encoding) {
         case Encoding::DELTA:
             return this->output.write_delta(value);

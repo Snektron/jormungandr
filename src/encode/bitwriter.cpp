@@ -8,7 +8,7 @@
 BitWriter::BitWriter(std::ostream& output):
     output(output) {
     std::memset(this->bit_buffer.data(), 0, this->bit_buffer.capacity());
-    this->bit_buffer.setSize(this->bit_buffer.capacity());
+    this->bit_buffer.set_size(this->bit_buffer.capacity());
 }
 
 BitWriter::~BitWriter() {
@@ -22,7 +22,7 @@ auto BitWriter::write_bit(uint8_t bit) -> void {
         this->flush();
     }
 
-    this->bit_buffer.pushBit(bit);
+    this->bit_buffer.push_bit(bit);
 }
 
 auto BitWriter::write_bits(uint64_t value, uint64_t n, std::endian endian) -> void {
@@ -99,9 +99,9 @@ auto BitWriter::write_golomb(uint64_t value, uint64_t b) -> void {
 
 auto BitWriter::flush() -> void {
     if (!this->bit_buffer.empty()) {
-        size_t bytes = (this->bit_buffer.getOffset() + bit_size_of<uint8_t>() - 1) / bit_size_of<uint8_t>();
+        size_t bytes = (this->bit_buffer.get_offset() + bit_size_of<uint8_t>() - 1) / bit_size_of<uint8_t>();
         this->output.write(reinterpret_cast<const char*>(this->bit_buffer.data()), bytes);
     }
-    this->bit_buffer.setOffset(0);
+    this->bit_buffer.set_offset(0);
     std::memset(this->bit_buffer.data(), 0, this->bit_buffer.capacity());
 }
