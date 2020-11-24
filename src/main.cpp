@@ -16,7 +16,12 @@
 using node_type = uint32_t;
 
 auto main(int argc, char* argv[]) -> int {
-    auto in = std::ifstream("../test/medium.tsv");
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <graph.tsv>" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    auto in = std::ifstream(argv[1]);
     auto original = TsvDecoder<node_type>(in).decode();
 
     auto ss = std::stringstream();
