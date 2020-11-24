@@ -121,7 +121,8 @@ auto WebGraphEncoder<T>::encode_node(T node, const std::span<const T>& neighbour
         this->encode_reference_list(node, neighbours) :
         std::vector<T>(neighbours.begin(), neighbours.end());
 
-    this->encode_interval_list(node, remaining);
+    if (this->encoding_config.min_interval_size > 0 && remaining.size() > 0)
+        this->encode_interval_list(node, remaining);
     this->encode_remaining(node, remaining);
 }
 
@@ -148,6 +149,9 @@ auto WebGraphEncoder<T>::encode_reference_list(T node, const std::span<const T>&
         if(copied_idx >= copied.size() || copied[copied_idx] != neighbours[i])
             result.push_back(neighbours[i]);
     }
+
+    if (blocks.size() == 0)
+        return result;
 
     this->encode_value(blocks[0], this->encoding_config.copy_block_encoding);
     for(size_t i = 1; i < blocks.size(); ++i)

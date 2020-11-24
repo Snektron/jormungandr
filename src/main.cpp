@@ -48,12 +48,13 @@ auto main(int argc, char* argv[]) -> int {
             return EXIT_FAILURE;
         }
 
+        std::cout << "Decoding original" << std::endl;
         auto in = std::ifstream(argv[1]);
-        auto original = TsvDecoder<node_type>(in).decode();
+        // auto original = TsvDecoder<node_type>(in).decode();
+        auto original = WebGraphDecoder<node_type>(in, 325557, {.min_interval_size = 4}).decode();
         // dump_graph(original);
 
-        // std::cout << "-----------" << std::endl;
-
+        std::cout << "Re-encoding" << std::endl;
         auto ss = std::stringstream();
         auto encoding = EncodingConfig();
         auto encoder = WebGraphEncoder<node_type>(ss, encoding, original);
@@ -65,6 +66,7 @@ auto main(int argc, char* argv[]) -> int {
         file_out.flush();
         file_out.close();
 
+        std::cout << "Re-decoding" << std::endl;
         auto decoder = WebGraphDecoder<node_type>(ss, original.num_nodes(), encoding);
         auto decoded = decoder.decode();
         // dump_graph(decoded);
