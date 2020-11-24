@@ -139,7 +139,7 @@ auto WebGraphEncoder<T>::encodeReference(T node, const std::span<const T>& neigh
     for(size_t i = 0; i < neighbours.size(); ++i) {
         while(copied_idx < copied.size() && copied[copied_idx] < neighbours[i])
             ++copied_idx;
-        if(copied_idx >= copied.size() || copied[copied_idx] == neighbours[i])
+        if(copied_idx >= copied.size() || copied[copied_idx] != neighbours[i])
             result.push_back(neighbours[i]);
     }
 

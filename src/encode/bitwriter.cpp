@@ -100,7 +100,6 @@ auto BitWriter::write_golomb(uint64_t value, uint64_t b) -> void {
 auto BitWriter::flush() -> void {
     if (!this->bit_buffer.empty()) {
         size_t bytes = (this->bit_buffer.getOffset() + bit_size_of<uint8_t>() - 1) / bit_size_of<uint8_t>();
-        std::cout << "(flush) bytes = " << bytes << std::endl;
         this->output.write(reinterpret_cast<const char*>(this->bit_buffer.data()), bytes);
     }
     this->bit_buffer.setOffset(0);
