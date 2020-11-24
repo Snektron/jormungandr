@@ -31,11 +31,11 @@ class WebGraphDecoder {
         auto next_node() -> std::optional<Node>;
 
     private:
-        auto read_reference_list(T index, std::vector<T>& to) -> void;
-        auto read_interval_list(T index, std::vector<T>& to) -> void;
-        auto read_residual_list(T index, T n, std::vector<T>& to) -> void;
-        auto read_value(Encoding encoding) -> T;
-        auto read_maybe_negative(T index, Encoding encoding) -> T;
+        auto decode_reference_list(T index, std::vector<T>& to) -> void;
+        auto decode_interval_list(T index, std::vector<T>& to) -> void;
+        auto decode_residual_list(T index, T n, std::vector<T>& to) -> void;
+        auto decode_value(Encoding encoding) -> T;
+        auto decode_maybe_negative(T index, Encoding encoding) -> T;
 };
 
 template <typename T>
@@ -53,21 +53,21 @@ auto WebGraphDecoder<T>::next_node() -> std::optional<Node> {
     auto& neighbors = this->window[index % this->window.size()];
     neighbors.clear();
 
-    T out_degree = this->read_value(this->encoding_config.outdegree_encoding);
+    T out_degree = this->decode_value(this->encoding_config.outdegree_encoding);
     if (out_degree == 0)
         return {{index, {}}};
 
 
     if (this->encoding_config.window_size > 0) {
-        this->read_reference_list(index, neighbors);
+        this->decode_reference_list(index, neighbors);
     }
 
     if (this->encoding_config.min_interval_size > 0 && neighbors.size() < out_degree) {
-        this->read_interval_list(index, neighbors);
+        this->decode_interval_list(index, neighbors);
     }
 
     if (neighbors.size() < out_degree) {
-        this->read_residual_list(index, out_degree - neighbors.size(), neighbors);
+        this->decode_residual_list(index, out_degree - neighbors.size(), neighbors);
     }
 
     std::sort(neighbors.begin(), neighbors.end());
@@ -76,8 +76,8 @@ auto WebGraphDecoder<T>::next_node() -> std::optional<Node> {
 }
 
 template <typename T>
-auto WebGraphDecoder<T>::read_reference_list(T index, std::vector<T>& to) -> void {
-    T reference = this->read_value(this->encoding_config.reference_encoding);
+auto WebGraphDecoder<T>::decode_reference_list(T index, std::vector<T>& to) -> void {
+    T reference = this->decode_value(this->encoding_config.reference_encoding);
     if (reference == 0)
         return;
 
@@ -85,11 +85,11 @@ auto WebGraphDecoder<T>::read_reference_list(T index, std::vector<T>& to) -> voi
         throw EncodingException("Invalid node reference");
 
     const auto referenced = this->window[(index - reference + this->window.size()) % this->window.size()];
-    T blocks = this->read_value(this->encoding_config.block_count_encoding);
+    T blocks = this->decode_value(this->encoding_config.block_count_encoding);
     T offset = 0;
     T i = 0;
     for (; i < blocks; ++i) {
-        T block_size = this->read_value(this->encoding_config.copy_block_encoding);
+        T block_size = this->decode_value(this->encoding_config.copy_block_encoding);
         if (i > 0)
             ++block_size;
 
@@ -107,9 +107,9 @@ auto WebGraphDecoder<T>::read_reference_list(T index, std::vector<T>& to) -> voi
 }
 
 template <typename T>
-auto WebGraphDecoder<T>::read_interval_list(T index, std::vector<T>& to) -> void {
+auto WebGraphDecoder<T>::decode_interval_list(T index, std::vector<T>& to) -> void {
     // Interval length and values are encoded using gamma encoding according to the Java source
-    T intervals = this->read_value(this->encoding_config.interval_count_encoding);
+    T intervals = this->decode_value(this->encoding_config.interval_count_encoding);
     if (intervals == 0) {
         return;
     }
@@ -119,10 +119,10 @@ auto WebGraphDecoder<T>::read_interval_list(T index, std::vector<T>& to) -> void
     T prev = 0;
     for (T i = 0; i < intervals; ++i) {
         T left_extreme = i == 0 ?
-            this->read_maybe_negative(index, interval_encoding) :
-            this->read_value(interval_encoding) + prev;
+            this->decode_maybe_negative(index, interval_encoding) :
+            this->decode_value(interval_encoding) + prev;
 
-        T length = this->read_value(interval_encoding) + this->encoding_config.min_interval_size;
+        T length = this->decode_value(interval_encoding) + this->encoding_config.min_interval_size;
 
         prev = left_extreme + length + 1;
 
@@ -133,12 +133,12 @@ auto WebGraphDecoder<T>::read_interval_list(T index, std::vector<T>& to) -> void
 }
 
 template <typename T>
-auto WebGraphDecoder<T>::read_residual_list(T index, T n, std::vector<T>& to) -> void {
+auto WebGraphDecoder<T>::decode_residual_list(T index, T n, std::vector<T>& to) -> void {
     T prev = 0;
     for (T i = 0; i < n; ++i) {
         T residual = i == 0 ?
-            this->read_maybe_negative(index, this->encoding_config.residual_encoding) :
-            this->read_value(this->encoding_config.residual_encoding) + prev;
+            this->decode_maybe_negative(index, this->encoding_config.residual_encoding) :
+            this->decode_value(this->encoding_config.residual_encoding) + prev;
 
         to.push_back(residual);
         prev = residual + 1;
@@ -146,7 +146,7 @@ auto WebGraphDecoder<T>::read_residual_list(T index, T n, std::vector<T>& to) ->
 }
 
 template <typename T>
-auto WebGraphDecoder<T>::read_value(Encoding encoding) -> T {
+auto WebGraphDecoder<T>::decode_value(Encoding encoding) -> T {
     switch (encoding) {
         case Encoding::DELTA:
             return this->input.read_delta();
@@ -160,8 +160,8 @@ auto WebGraphDecoder<T>::read_value(Encoding encoding) -> T {
 }
 
 template <typename T>
-auto WebGraphDecoder<T>::read_maybe_negative(T index, Encoding encoding) -> T {
-    T value = this->read_value(encoding);
+auto WebGraphDecoder<T>::decode_maybe_negative(T index, Encoding encoding) -> T {
+    T value = this->decode_value(encoding);
 
     if (value % 2 == 0) {
         // Positive
