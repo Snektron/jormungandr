@@ -117,6 +117,7 @@ auto WebGraphEncoder<T>::encodeNode(T node, const std::span<const T>& neighbours
     auto remaining = std::vector<T>(neighbours.begin(), neighbours.end());
     this->encodeValue(0, this->encoding_config.reference_encoding);
 
+    // this->encodeValue(0, this->encoding_config.interval_count_encoding);
     this->encode_interval_list(node, remaining);
     this->encodeRemaining(node, remaining);
 }
@@ -200,6 +201,17 @@ auto WebGraphEncoder<T>::encode_interval_list(T index, std::vector<T>& nodes) ->
         prev = node;
         prev_len = length;
     }
+
+    for (size_t i = 0; i < nodes.size();) {
+        size_t length = interval_length(nodes, i);
+        if (length < 2) {
+            i += length;
+            continue;
+        }
+
+        nodes.erase(nodes.begin() + i, nodes.begin() + i + length);
+    }
+
 }
 
 template <typename T>
