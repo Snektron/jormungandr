@@ -6,6 +6,7 @@
 #include "exceptions.hpp"
 
 #include <span>
+#include <vector>
 
 template <typename T>
 class WebGraphEncoder {
@@ -14,10 +15,11 @@ class WebGraphEncoder {
         EncodingConfig encoding_config;
         const Graph<T>& graph;
 
-        auto findMostOverlapping(T node, T size, const std::span<const T>&);
+        auto findMostOverlapping(T node, T size, const std::span<const T>&) -> T;
+        auto findCopyBlocks(const std::span<const T>&, T) -> std::vector<size_t>;
 
-        auto encodeNode(T, const std::span<const T>&);
-        auto encodeReference(T, const std::span<const T>&);
+        auto encodeNode(T, const std::span<const T>&) -> void;
+        auto encodeReference(T, const std::span<const T>&) -> void;
         auto encodeValue(auto, Encoding) -> void;
     public:
         WebGraphEncoder(std::ostream&, const EncodingConfig&, const Graph<T>&);
@@ -38,7 +40,7 @@ auto WebGraphEncoder<T>::encode() -> void {
 }
 
 template <typename T>
-auto WebGraphEncoder<T>::findMostOverlapping(T node, T size, const std::span<const T>& neighbours) {
+auto WebGraphEncoder<T>::findMostOverlapping(T node, T size, const std::span<const T>& neighbours) -> T {
     auto best_node = T();
     auto best_score = size_t(0);
     for(auto i = node; i < node + size; ++i) {
@@ -65,7 +67,32 @@ auto WebGraphEncoder<T>::findMostOverlapping(T node, T size, const std::span<con
 }
 
 template <typename T>
-auto WebGraphEncoder<T>::encodeNode(T node, const std::span<const T>& neighbours) {
+auto WebGraphEncoder<T>::findCopyBlocks(const std::span<const T>& neighbours, T ref_node) -> std::vector<size_t> {
+    auto result = std::vector<size_t>();
+    auto copy = true;
+
+    size_t vec_idx = 0;
+    size_t current_size = 0;
+    this->graph.for_each_neighbour(ref_node, [&](T ref_neighbour) {
+        while(vec_idx < neighbours.size() && neighbours[vec_idx] < ref_neighbour)
+            ++vec_idx;
+
+        if(vec_idx >= neighbours.size())
+            return;
+
+        if((neighbours[vec_idx] == ref_neighbour) != copy) {
+            copy = !copy;
+            result.push_back(current_size);
+            current_size = 0;
+        }
+
+        ++current_size;
+    });
+    return result;
+}
+
+template <typename T>
+auto WebGraphEncoder<T>::encodeNode(T node, const std::span<const T>& neighbours) -> void {
     this->encodeValue(neighbours.size(), this->encoding_config.outdegree_encoding);
     if(neighbours.size() == 0)
         return;
@@ -76,13 +103,25 @@ auto WebGraphEncoder<T>::encodeNode(T node, const std::span<const T>& neighbours
 }
 
 template <typename T>
-auto WebGraphEncoder<T>::encodeReference(T node, const std::span<const T>& neighbours) {
+auto WebGraphEncoder<T>::encodeReference(T node, const std::span<const T>& neighbours) -> void {
     auto reference = this->findMostOverlapping(node - this->encoding_config.window_size,
         this->encoding_config.window_size,
         neighbours);
 
     this->encodeValue(node - reference, this->encoding_config.reference_encoding);
+    if(reference == node)
+        return;
 
+    auto blocks = this->findCopyBlocks(neighbours, reference);
+    this->encodeValue(blocks.size(), this->encoding_config.block_count_encoding);
+
+    if(blocks.size() == 0)
+        return;
+
+    this->encodeValue(blocks[0], this->encoding_config.copy_block_encoding);
+
+    for(size_t i = 1; i < blocks.size(); ++i)
+        this->encodeValue(blocks[i] - 1, this->encoding_config.copy_block_encoding);
 }
 
 template <typename T>
