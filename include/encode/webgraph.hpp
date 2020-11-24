@@ -110,9 +110,11 @@ auto WebGraphEncoder<T>::encodeNode(T node, const std::span<const T>& neighbours
     if(neighbours.size() == 0)
         return;
 
-    auto remaining = this->encoding_config.window_size > 0 ?
-        this->encodeReference(node, neighbours) :
-        std::vector<T>(neighbours.begin(), neighbours.end());
+    // auto remaining = this->encoding_config.window_size > 0 ?
+    //     this->encodeReference(node, neighbours) :
+    //     std::vector<T>(neighbours.begin(), neighbours.end());
+    auto remaining = std::vector<T>(neighbours.begin(), neighbours.end());
+    this->encodeValue(0, this->encoding_config.reference_encoding);
 
     this->encode_interval_list(node, remaining);
     this->encodeRemaining(node, remaining);
