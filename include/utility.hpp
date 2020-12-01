@@ -30,7 +30,7 @@ auto map_values(const std::vector<T>& keys, U call) {
 template <typename T, typename F>
 auto reduce_values(const std::vector<T>& vals, F call) {
     if(vals.size() == 0)
-        return std::declval<decltype(call(std::declval<T>(), std::declval<T>()))>();
+        return T();
     if(vals.size() == 1)
         return vals[0];
 
