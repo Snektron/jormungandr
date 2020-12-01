@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <functional>
 
 #include "type_cast.hpp"
 #include "utility.hpp"
@@ -29,7 +30,13 @@ class PropertyMap {
         auto maybe_as(const std::string&) const -> std::optional<T>;
 
         template <typename T>
-        auto as_list(const std::string&, const std::string& separator = ",") const -> std::vector<T>;
+        auto as_list(const std::string&, const std::string& = ",") const -> std::vector<T>;
+
+        template <typename T>
+        auto set(const std::string&, const T&) -> void;
+
+        template <typename T>
+        auto set_list(const std::string&, const std::vector<T>&, const std::string& = ",") -> void;
 };
 
 template <typename T>
@@ -37,6 +44,17 @@ auto PropertyMap::as(const std::string& key) const -> T {
     return utils_type_cast<T>((*this)[key]);
 }
 
+
+template <typename T>
+auto PropertyMap::set(const std::string& key, const T& value) -> void {
+    (*this)[key] = utils_type_cast<std::string>(value);
+}
+
+template <typename T>
+auto PropertyMap::set_list(const std::string& key, const std::vector<T>& value, const std::string& sep) -> void {
+    (*this)[key] = reduce_values(map_values(value, utils_type_cast<std::string, T>),
+                                    std::bind_front(concat_string, sep));
+}
 
 template <typename F>
 auto PropertyMap::for_each(F callback) const {

@@ -31,3 +31,7 @@ auto trim_string(const std::string& str) -> std::string {
 
     return str.substr(start_offset, end_offset - start_offset + 1);
 }
+
+auto concat_string(const std::string& sep, const std::string& a, const std::string& b) -> std::string {
+    return a + sep + b;
+}
