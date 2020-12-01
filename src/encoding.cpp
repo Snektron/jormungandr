@@ -67,6 +67,8 @@ auto EncodingConfig::from_properties(const PropertyMap& properties) -> EncodingC
 }
 
 auto EncodingConfig::to_properties(PropertyMap& properties) -> void {
+    EncodingConfig default_encoding;
+
     properties.set("zetak", this->zeta_k);
     properties.set("windowsize", this->window_size);
     properties.set("maxrefcount", this->max_ref_count);
@@ -83,11 +85,20 @@ auto EncodingConfig::to_properties(PropertyMap& properties) -> void {
     };
 
     auto flags = std::vector<std::string>();
-    flags.push_back("BLOCKS_" + encoding_to_string(this->copy_block_encoding));
-    flags.push_back("BLOCK_COUNT_" + encoding_to_string(this->block_count_encoding));
-    flags.push_back("OUTDEGREES_" + encoding_to_string(this->outdegree_encoding));
-    flags.push_back("REFERENCES_" + encoding_to_string(this->reference_encoding));
-    flags.push_back("RESIDUALS_" + encoding_to_string(this->residual_encoding));
+    if (this->copy_block_encoding != default_encoding.copy_block_encoding)
+        flags.push_back("BLOCKS_" + encoding_to_string(this->copy_block_encoding));
+
+    if (this->block_count_encoding != default_encoding.block_count_encoding)
+        flags.push_back("BLOCK_COUNT_" + encoding_to_string(this->block_count_encoding));
+
+    if (this->outdegree_encoding != default_encoding.outdegree_encoding)
+        flags.push_back("OUTDEGREES_" + encoding_to_string(this->outdegree_encoding));
+
+    if (this->reference_encoding != default_encoding.reference_encoding)
+        flags.push_back("REFERENCES_" + encoding_to_string(this->reference_encoding));
+
+    if (this->residual_encoding != default_encoding.residual_encoding)
+        flags.push_back("RESIDUALS_" + encoding_to_string(this->residual_encoding));
 
     properties.set_list("compressionflags", flags, "|");
 }

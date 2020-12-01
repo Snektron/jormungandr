@@ -10,6 +10,7 @@
 #include "decode/binary.hpp"
 #include "decode/webgraph.hpp"
 #include "encode/bitwriter.hpp"
+#include "encode/property.hpp"
 #include "encode/webgraph.hpp"
 
 #include "bitbuffer.hpp"
@@ -58,18 +59,20 @@ auto main(int argc, char* argv[]) -> int {
         auto ss = std::stringstream();
         auto encoding = EncodingConfig();
         auto encoder = WebGraphEncoder<node_type>(ss, encoding, original);
-        encoder.encode();
+        auto new_props = encoder.encode();
 
-        auto file_out = std::ofstream(argv[2], std::ios::binary);
+        auto file_out = std::ofstream(std::string(argv[2]) + ".graph", std::ios::binary);
         file_out << ss.rdbuf();
         ss.seekg(0);
         file_out.flush();
         file_out.close();
 
+        auto props_out = std::ofstream(std::string(argv[2]) + ".properties");
+        PropertyEncoder(props_out).encode(new_props);
+
         std::cout << "Re-decoding" << std::endl;
         auto decoder = WebGraphDecoder<node_type>(ss, original.num_nodes(), encoding);
         auto decoded = decoder.decode();
-        // dump_graph(decoded);
 
         std::cout << "Graphs are " << (graph_eql(original, decoded) ? "" : "not ") << "equal" << std::endl;
 

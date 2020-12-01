@@ -31,7 +31,7 @@ struct EncodingConfig {
     uint32_t min_interval_size = 2;
     uint32_t window_size = 7;
     uint32_t max_ref_count = 3;
-    uint8_t pred_size = 4;
+    uint32_t pred_size = 4;
 
     static auto from_properties(const PropertyMap& properties) -> EncodingConfig;
     auto to_properties(PropertyMap& properties) -> void;
