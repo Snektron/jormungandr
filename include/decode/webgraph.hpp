@@ -164,7 +164,7 @@ auto WebGraphDecoder<T>::decode_residual_list(T index, T n, std::vector<T>& to) 
     T prev = 0;
     for (T i = 0; i < n; ++i) {
         T residual = i == 0 ?
-            this->decode_maybe_negative(index, this->encoding_config.residual_initial_encoding) :
+            this->decode_maybe_negative(index, this->encoding_config.residual_encoding) :
             this->decode_value(this->encoding_config.residual_encoding) + prev;
 
         to.push_back(residual);

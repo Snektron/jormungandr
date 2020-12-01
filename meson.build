@@ -16,6 +16,7 @@ sources = [
     'src/encode/property.cpp',
     'src/graph/propertymap.cpp',
     'src/utility.cpp',
+    'src/encoding.cpp',
 ]
 
 executable(

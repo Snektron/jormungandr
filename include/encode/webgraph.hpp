@@ -42,6 +42,7 @@ WebGraphEncoder<T>::WebGraphEncoder(std::ostream& output, const EncodingConfig& 
 template <typename T>
 auto WebGraphEncoder<T>::encode() -> PropertyMap {
     auto prop = PropertyMap();
+    this->encoding_config.to_properties(prop);
 
     size_t edges = 0;
     size_t nodes = this->graph.num_nodes();
@@ -249,7 +250,7 @@ auto WebGraphEncoder<T>::encode_remaining(T node, const std::vector<T>& nodes) -
     if(nodes.size() == 0)
         return;
 
-    this->encode_maybe_negative(nodes[0], node, this->encoding_config.residual_initial_encoding);
+    this->encode_maybe_negative(nodes[0], node, this->encoding_config.residual_encoding);
 
     auto prev_node = nodes[0];
     for(size_t i = 1; i < nodes.size(); ++i) {
