@@ -2,6 +2,7 @@
 #define _JORMUNGANDR_ENCODE_WEBGRAPH_HPP
 
 #include "encode/bitwriter.hpp"
+#include "graph/propertymap.hpp"
 #include "encoding.hpp"
 #include "exceptions.hpp"
 
@@ -30,7 +31,7 @@ class WebGraphEncoder {
     public:
         WebGraphEncoder(std::ostream&, const EncodingConfig&, const Graph<T>&);
 
-        auto encode() -> void;
+        auto encode() -> PropertyMap;
 };
 
 template <typename T>
@@ -39,11 +40,25 @@ WebGraphEncoder<T>::WebGraphEncoder(std::ostream& output, const EncodingConfig& 
         output(output), encoding_config(encoding_config), graph(graph) {}
 
 template <typename T>
-auto WebGraphEncoder<T>::encode() -> void {
-    this->graph.for_each([this](T node, std::span<const T> neighbours) {
+auto WebGraphEncoder<T>::encode() -> PropertyMap {
+    auto prop = PropertyMap();
+
+    size_t edges = 0;
+    size_t nodes = 0;
+    this->graph.for_each([&](T node, std::span<const T> neighbours) {
         this->encode_node(node, neighbours);
+
+        ++nodes;
+        edges += neighbours.size();
     });
     this->output.flush();
+
+    prop.set("arcs", edges);
+    prop.set("nodes", nodes);
+    prop.set("graphclass", "it.unimi.dsi.webgraph.BVGraph");
+    prop.set("version", 0);
+
+    return prop;
 }
 
 template <typename T>
