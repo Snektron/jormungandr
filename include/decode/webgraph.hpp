@@ -152,7 +152,7 @@ auto WebGraphDecoder<T>::decode_residual_list(T index, T n, std::vector<T>& to) 
     T prev = 0;
     for (T i = 0; i < n; ++i) {
         T residual = i == 0 ?
-            this->decode_maybe_negative(index, this->encoding_config.residual_encoding) :
+            this->decode_maybe_negative(index, this->encoding_config.residual_initial_encoding) :
             this->decode_value(this->encoding_config.residual_encoding) + prev;
 
         to.push_back(residual);
@@ -171,6 +171,8 @@ auto WebGraphDecoder<T>::decode_value(Encoding encoding) -> T {
             return this->input.read_unary_with_terminator(0);
         case Encoding::ZETA:
             return this->input.read_zeta(this->encoding_config.zeta_k);
+        case Encoding::PRED_SIZE:
+            return this->input.read_pred_size(this->encoding_config.pred_size);
     }
 }
 

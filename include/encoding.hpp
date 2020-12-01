@@ -8,6 +8,7 @@ enum class Encoding {
     GAMMA,
     UNARY,
     ZETA,
+    PRED_SIZE
 };
 
 struct EncodingConfig {
@@ -16,6 +17,7 @@ struct EncodingConfig {
     Encoding outdegree_encoding = Encoding::GAMMA;
     Encoding reference_encoding = Encoding::UNARY;
     Encoding residual_encoding = Encoding::ZETA;
+    Encoding residual_initial_encoding = Encoding::ZETA;
 
     // According to the Java source, this is always gamma
     Encoding interval_count_encoding = Encoding::GAMMA;
@@ -27,6 +29,7 @@ struct EncodingConfig {
     uint32_t min_interval_size = 2;
     uint32_t window_size = 7;
     uint32_t max_ref_count = 3;
+    uint8_t pred_size = 4;
 };
 
 #endif

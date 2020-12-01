@@ -123,6 +123,14 @@ auto BitReader::read_golomb(uint64_t b) -> uint64_t {
     return q + this->read_minimal_binary(b);
 }
 
+auto BitReader::read_pred_size(uint64_t size) -> uint64_t {
+    if(size == 0)
+        return 0;
+
+    uint64_t bit_size = this->read_bits(size);
+    return this->read_bits(bit_size);
+}
+
 auto BitReader::discard_buffer_bit() -> void {
     this->buffer.pop_bit();
 

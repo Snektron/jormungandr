@@ -32,6 +32,7 @@ class BitWriter {
         auto write_minimal_binary(uint64_t value, uint64_t z) -> void;
         auto write_zeta(uint64_t value, uint64_t k) -> void;
         auto write_golomb(uint64_t value, uint64_t b) -> void;
+        auto write_pred_size(uint64_t value, uint64_t size) -> void;
 
         auto flush() -> void;
 };

@@ -224,7 +224,7 @@ auto WebGraphEncoder<T>::encode_remaining(T node, const std::vector<T>& nodes) -
     if(nodes.size() == 0)
         return;
 
-    this->encode_maybe_negative(nodes[0], node, this->encoding_config.residual_encoding);
+    this->encode_maybe_negative(nodes[0], node, this->encoding_config.residual_initial_encoding);
 
     auto prev_node = nodes[0];
     for(size_t i = 1; i < nodes.size(); ++i) {
@@ -253,6 +253,8 @@ auto WebGraphEncoder<T>::encode_value(auto value, Encoding encoding) -> void {
             return this->output.write_unary_with_terminator(value, 0);
         case Encoding::ZETA:
             return this->output.write_zeta(value, this->encoding_config.zeta_k);
+        case Encoding::PRED_SIZE:
+            return this->output.write_pred_size(value, this->encoding_config.pred_size);
         default:
             throw EncodingException("Invalid encoding");
     }

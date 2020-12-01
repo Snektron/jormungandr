@@ -97,6 +97,12 @@ auto BitWriter::write_golomb(uint64_t value, uint64_t b) -> void {
     this->write_minimal_binary(value % b, b);
 }
 
+auto BitWriter::write_pred_size(uint64_t value, uint64_t size) -> void {
+    auto bit_width = std::bit_width(value);
+    this->write_bits(bit_width, size);
+    this->write_bits(value, bit_width);
+}
+
 auto BitWriter::flush() -> void {
     if (!this->bit_buffer.empty()) {
         size_t bytes = (this->bit_buffer.get_offset() + bit_size_of<uint8_t>() - 1) / bit_size_of<uint8_t>();
