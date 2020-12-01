@@ -19,21 +19,30 @@ class PropertyMap {
         auto operator[](const std::string&) const -> const std::string&;
 
         template <typename T>
-        auto as(const std::string&) -> T;
+        auto as(const std::string&) const -> T;
 
         template <typename T>
-        auto as_list(const std::string&) -> std::vector<T>;
+        auto as_list(const std::string&) const -> std::vector<T>;
+
+        template <typename F>
+        auto for_each(F) const;
 };
 
 template <typename T>
-auto PropertyMap::as(const std::string& key) -> T {
+auto PropertyMap::as(const std::string& key) const -> T {
     return utils_type_cast<T>((*this)[key]);
 }
 
 template <typename T>
-auto PropertyMap::as_list(const std::string& key) -> std::vector<T> {
+auto PropertyMap::as_list(const std::string& key) const -> std::vector<T> {
     return map_values(split_string((*this)[key], ","), utils_type_cast<T, std::string>);
 }
 
+template <typename F>
+auto PropertyMap::for_each(F callback) const {
+    for(const auto& it : this->props) {
+        callback(it.first, it.second);
+    }
+}
 
 #endif
