@@ -26,6 +26,13 @@ class ParseException : public Exception {
         virtual ~ParseException() = default;
 };
 
+class PropertyException : public Exception {
+    public:
+        template <typename... Args>
+        PropertyException(const Args&... args) : Exception(args...) {}
+        virtual ~PropertyException() = default;
+};
+
 class EncodingException : public Exception {
     public:
         template <typename... Args>

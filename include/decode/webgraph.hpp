@@ -2,6 +2,7 @@
 #define _JORMUNGANDR_DECODE_WEBGRAPH_HPP
 
 #include "decode/bitreader.hpp"
+#include "decode/property.hpp"
 #include "encoding.hpp"
 #include "exceptions.hpp"
 #include "graph/graph.hpp"
@@ -10,6 +11,7 @@
 #include <vector>
 #include <iosfwd>
 #include <optional>
+#include <string_view>
 #include <span>
 #include <cstdint>
 
@@ -29,6 +31,7 @@ class WebGraphDecoder {
         };
 
         WebGraphDecoder(std::istream& input, T num_nodes, EncodingConfig encoding_config);
+        WebGraphDecoder(std::istream& input, std::istream& properties);
         auto next_node() -> std::optional<Node>;
         auto decode() -> Graph<T>;
 
@@ -44,6 +47,15 @@ template <typename T>
 WebGraphDecoder<T>::WebGraphDecoder(std::istream& input, T num_nodes, EncodingConfig encoding_config):
     input(input), window(encoding_config.window_size + 1),
     encoding_config(encoding_config), num_nodes(num_nodes), next_node_index(0) {}
+
+template <typename T>
+WebGraphDecoder<T>::WebGraphDecoder(std::istream& input, std::istream& properties):
+    input(input), next_node_index(0) {
+    auto property_map = PropertyParser(properties).decode();
+    this->num_nodes = property_map.as<T>("nodes");
+    this->encoding_config = EncodingConfig::from_properties(property_map);
+    this->window.resize(this->encoding_config.window_size + 1);
+}
 
 template <typename T>
 auto WebGraphDecoder<T>::next_node() -> std::optional<Node> {
