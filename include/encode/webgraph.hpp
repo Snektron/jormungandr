@@ -6,7 +6,7 @@
 #include "exceptions.hpp"
 
 #include <span>
-#include <vector>
+#include <deque>
 #include <optional>
 #include <algorithm>
 
@@ -16,6 +16,7 @@ class WebGraphEncoder {
         BitWriter output;
         EncodingConfig encoding_config;
         const Graph<T>& graph;
+        std::deque<T> window_ref_counts;
 
         auto find_most_overlapping(T node, const std::span<const T>&) -> std::optional<T>;
         auto find_copy_blocks(const std::span<const T>&, T, std::vector<T>&) -> std::vector<size_t>;
@@ -57,6 +58,9 @@ auto WebGraphEncoder<T>::find_most_overlapping(T node, const std::span<const T>&
         size_t matches = 0;
         size_t span_offset = 0;
 
+        if(this->window_ref_counts[i - start] >= this->encoding_config.max_ref_count)
+            continue;
+
         this->graph.for_each_neighbour(i, [&](T neighbour) {
             while(span_offset < neighbours.size() && neighbours[span_offset] < neighbour)
                 ++span_offset;
@@ -73,6 +77,13 @@ auto WebGraphEncoder<T>::find_most_overlapping(T node, const std::span<const T>&
             best_node = i;
         }
     }
+
+    if(!best_node)
+        this->window_ref_counts.push_back(0);
+    else
+        this->window_ref_counts.push_back(this->window_ref_counts[best_node.value() - start] + 1);
+    if(this->window_ref_counts.size() > this->encoding_config.window_size)
+        this->window_ref_counts.pop_front();
     return best_node;
 }
 

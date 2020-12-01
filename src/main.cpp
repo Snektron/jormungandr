@@ -49,7 +49,7 @@ auto main(int argc, char* argv[]) -> int {
         }
 
         std::cout << "Decoding original" << std::endl;
-        auto in = std::ifstream(argv[1]);
+        auto in = std::ifstream(argv[1], std::ios::binary);
         // auto original = TsvDecoder<node_type>(in).decode();
         auto original = WebGraphDecoder<node_type>(in, 325557, {.min_interval_size = 4}).decode();
         // dump_graph(original);
