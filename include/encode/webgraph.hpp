@@ -44,11 +44,10 @@ auto WebGraphEncoder<T>::encode() -> PropertyMap {
     auto prop = PropertyMap();
 
     size_t edges = 0;
-    size_t nodes = 0;
+    size_t nodes = this->graph.num_nodes();
     this->graph.for_each([&](T node, std::span<const T> neighbours) {
         this->encode_node(node, neighbours);
 
-        ++nodes;
         edges += neighbours.size();
     });
     this->output.flush();
