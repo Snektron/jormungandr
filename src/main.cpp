@@ -4,6 +4,7 @@
 #include <sstream>
 #include <bitset>
 #include <string_view>
+#include <cstring>
 
 #include "decode/property.hpp"
 #include "decode/tsv.hpp"
@@ -16,6 +17,12 @@
 #include "bitbuffer.hpp"
 
 using node_type = uint32_t;
+
+enum class EncodingType {
+    TSV,
+    BINARY,
+    WEBGRAPH
+};
 
 auto dump_graph(const Graph<node_type>& g) {
     g.for_each([](node_type src, std::span<const node_type> neighbours) {
@@ -43,39 +50,61 @@ auto graph_eql(const Graph<node_type>& a, const Graph<node_type>& b) {
     return true;
 }
 
+auto print_usage(const char* prog) -> void {
+    std::cerr << "Usage: " << prog << " [options] <input file> <output file>\n"
+        "options:\n"
+        "--input <tsv|binary|webgraph>\n"
+        "--output <tsv|binary|webgraph>" << std::endl;
+}
+
 auto main(int argc, char* argv[]) -> int {
     try {
-        if (argc < 3) {
-            std::cerr << "Usage: " << argv[0] << " <graph.tsv> <webgraph.out>" << std::endl;
-            return EXIT_FAILURE;
+        bool parse_input = false;
+        bool parse_output = false;
+        const char* input_file = NULL;
+        const char* output_file = NULL;
+        EncodingType input_encoding = EncodingType::TSV;
+        EncodingType output_encoding = EncodingType::WEBGRAPH;
+
+        for(int i = 1; i < argc; ++i) {
+            const char* arg = argv[i];
+
+            if(parse_input || parse_output) {
+                EncodingType encoding;
+                if(!std::strcmp(arg, "tsv"))
+                    encoding = EncodingType::TSV;
+                else if(!std::strcmp(arg, "binary"))
+                    encoding = EncodingType::BINARY;
+                else if(!std::strcmp(arg, "webgraph"))
+                    encoding = EncodingType::WEBGRAPH;
+                else {
+                    print_usage(argv[0]);
+                    return EXIT_FAILURE;
+                }
+                (parse_input ? input_encoding : output_encoding) = encoding;
+                parse_output = parse_input = false;
+                continue;
+            }
+            if(!std::strcmp(arg, "--input"))
+                parse_input = true;
+            else if(!std::strcmp(arg, "--output"))
+                parse_output = true;
+            else {
+                if(input_file == NULL)
+                    input_file = arg;
+                else if(output_file == NULL)
+                    output_file = arg;
+                else {
+                    print_usage(argv[0]);
+                    return EXIT_FAILURE;
+                }
+            }
         }
 
-        std::cout << "Decoding original" << std::endl;
-        auto in = std::ifstream(std::string(argv[1]) + ".graph", std::ios::binary);
-        auto props = std::ifstream(std::string(argv[1]) + ".properties", std::ios::binary);
-        auto original = WebGraphDecoder<node_type>(in, props).decode();
-
-        std::cout << "Re-encoding" << std::endl;
-        auto ss = std::stringstream();
-        auto encoding = EncodingConfig();
-        auto encoder = WebGraphEncoder<node_type>(ss, encoding, original);
-        auto new_props = encoder.encode();
-
-        auto file_out = std::ofstream(std::string(argv[2]) + ".graph", std::ios::binary);
-        file_out << ss.rdbuf();
-        ss.seekg(0);
-        file_out.flush();
-        file_out.close();
-
-        auto props_out = std::ofstream(std::string(argv[2]) + ".properties");
-        PropertyEncoder(props_out).encode(new_props);
-
-        std::cout << "Re-decoding" << std::endl;
-        auto decoder = WebGraphDecoder<node_type>(ss, original.num_nodes(), encoding);
-        auto decoded = decoder.decode();
-
-        std::cout << "Graphs are " << (graph_eql(original, decoded) ? "" : "not ") << "equal" << std::endl;
-
+        if(parse_output || parse_input || !input_file || !output_file) {
+            print_usage(argv[0]);
+            return EXIT_FAILURE;
+        }
         return EXIT_SUCCESS;
     } catch(const std::runtime_error& err) {
         std::cerr << "Exception occurred: " << err.what() << std::endl;
