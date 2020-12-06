@@ -13,6 +13,8 @@
 #include "encode/bitwriter.hpp"
 #include "encode/property.hpp"
 #include "encode/webgraph.hpp"
+#include "encode/tsv.hpp"
+#include "encode/binary.hpp"
 
 #include "bitbuffer.hpp"
 
@@ -105,6 +107,9 @@ auto main(int argc, char* argv[]) -> int {
             print_usage(argv[0]);
             return EXIT_FAILURE;
         }
+
+
+
         return EXIT_SUCCESS;
     } catch(const std::runtime_error& err) {
         std::cerr << "Exception occurred: " << err.what() << std::endl;

@@ -6,10 +6,10 @@
 
 #include "graph/graph.hpp"
 
-template <typename T>
+template <typename T, typename U>
 concept Decoder = requires(T t) {
-    requires std::unsigned_integral<T>;
-    { t.decode() } -> std::convertible_to<Graph<T>>;
+    requires std::unsigned_integral<U>;
+    { t.decode() } -> std::convertible_to<Graph<U>>;
 };
 
 #endif
