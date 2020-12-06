@@ -14,7 +14,7 @@ BitWriter::~BitWriter() {
 }
 
 auto BitWriter::write_bit(uint8_t bit) -> void {
-    this->current_output |= bit << (bit_size_of<uint64_t>() - 1 - this->output_offset);
+    this->current_output |= uint64_t(bit) << (bit_size_of<uint64_t>() - 1 - this->output_offset);
     if(++this->output_offset == bit_size_of<uint64_t>())
         this->flush_buffer();
 }
@@ -42,8 +42,10 @@ auto BitWriter::write_bits(uint64_t value, uint64_t n, std::endian endian) -> vo
 }
 
 auto BitWriter::write_unary(uint64_t value, uint8_t bit) -> void {
-    for (size_t i = 0; i < value; ++i) {
-        this->write_bit(bit);
+    while(value > 0) {
+        size_t num_bits = value > bit_size_of<uint64_t>() ? bit_size_of<uint64_t>() : value;
+        this->write_bits(bit ? (1ull << num_bits) - 1 : 0, num_bits);
+        value -= num_bits;
     }
 }
 
