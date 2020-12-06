@@ -110,7 +110,7 @@ auto main(int argc, char* argv[]) -> int {
 
         std::stringstream buf;
         auto x = BitWriter(buf);
-        x.write_pred_size(255, 8);
+        x.write_pred_size(257, 7);
         x.flush();
 
         std::string res = buf.str();

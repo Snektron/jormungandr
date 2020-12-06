@@ -105,9 +105,8 @@ auto BitWriter::flush() -> void {
 
 auto BitWriter::flush_buffer() -> void {
     size_t num_bytes = (this->output_offset >> 3) + ((this->output_offset & 0x7) != 0);
-    byte_swap(this->current_output);
-    this->output.write(((const char*)&this->current_output) + sizeof(current_output) - num_bytes,
-        num_bytes);
+    uint64_t output = byte_swap(this->current_output);
+    this->output.write(((const char*)&output), num_bytes);
     this->current_output = 0;
     this->output_offset = 0;
 }
