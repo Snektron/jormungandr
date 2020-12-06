@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'it.unimi.dsi:webgraph:3.6.8'
+}
+
+application {
+    getMainClass().set('space.pythons.jormungandr.benchmark.Main')
+}
