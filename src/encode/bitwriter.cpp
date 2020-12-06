@@ -15,9 +15,8 @@ BitWriter::~BitWriter() {
 
 auto BitWriter::write_bit(uint8_t bit) -> void {
     this->current_output |= bit << (bit_size_of<uint64_t>() - 1 - this->output_offset);
-    if(++this->output_offset == bit_size_of<uint64_t>()) {
+    if(++this->output_offset == bit_size_of<uint64_t>())
         this->flush_buffer();
-    }
 }
 
 auto BitWriter::write_bits(uint64_t value, uint64_t n, std::endian endian) -> void {
@@ -26,10 +25,19 @@ auto BitWriter::write_bits(uint64_t value, uint64_t n, std::endian endian) -> vo
     if(endian == std::endian::big)
         value = bit_reverse(value) >> (bit_size_of<uint64_t>() - n);
 
-    //TODO: write bits efficient
-    while(n-- > 0) {
-        this->write_bit(value & 1);
-        value >>= 1;
+    size_t bits_left_first = bit_size_of<uint64_t>() - this->output_offset;
+    if(bits_left_first >= n) {
+        this->current_output |= value << (bits_left_first - n);
+        this->output_offset += n;
+        if(this->output_offset == bit_size_of<uint64_t>())
+            this->flush_buffer();
+    }
+    else {
+        this->current_output |= (value & ((1ull << bits_left_first) - 1));
+        this->output_offset = bit_size_of<uint64_t>();
+        this->flush_buffer();
+        this->current_output = value << (bit_size_of<uint64_t>() - n - bits_left_first);
+        this->output_offset = n - bits_left_first;
     }
 }
 
@@ -96,7 +104,10 @@ auto BitWriter::flush() -> void {
 }
 
 auto BitWriter::flush_buffer() -> void {
-    this->output.write((const char*)&this->current_output, sizeof(this->current_output));
+    size_t num_bytes = (this->output_offset >> 3) + ((this->output_offset & 0x7) != 0);
+    byte_swap(this->current_output);
+    this->output.write(((const char*)&this->current_output) + sizeof(current_output) - num_bytes,
+        num_bytes);
     this->current_output = 0;
     this->output_offset = 0;
 }
