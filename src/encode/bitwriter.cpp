@@ -6,9 +6,7 @@
 #include <cstring>
 
 BitWriter::BitWriter(std::ostream& output):
-    output(output) {
-    std::memset(this->bit_buffer.data(), 0, this->bit_buffer.capacity());
-    this->bit_buffer.set_size(this->bit_buffer.capacity());
+    output(output), current_output(0), output_offset(0) {
 }
 
 BitWriter::~BitWriter() {
@@ -16,33 +14,22 @@ BitWriter::~BitWriter() {
 }
 
 auto BitWriter::write_bit(uint8_t bit) -> void {
-    assert(bit == 0 || bit == 1);
-
-    if (this->bit_buffer.full()) {
-        this->flush();
+    this->current_output |= bit << (bit_size_of<uint64_t>() - 1 - this->output_offset);
+    if(++this->output_offset == bit_size_of<uint64_t>()) {
+        this->flush_buffer();
     }
-
-    this->bit_buffer.push_bit(bit);
 }
 
 auto BitWriter::write_bits(uint64_t value, uint64_t n, std::endian endian) -> void {
     assert(n <= bit_size_of<uint64_t>());
 
-    switch (endian) {
-        case std::endian::big:
-            while (n--) {
-                this->write_bit((value & (1 << n)) != 0);
-            }
-            break;
-        case std::endian::little:
-            while (n--) {
-                this->write_bit(value & 1);
-                value >>= 1;
-            }
-            break;
-        default:
-            // Mixed endian
-            assert(false);
+    if(endian == std::endian::big)
+        value = bit_reverse(value) >> (bit_size_of<uint64_t>() - n);
+
+    //TODO: write bits efficient
+    while(n-- > 0) {
+        this->write_bit(value & 1);
+        value >>= 1;
     }
 }
 
@@ -104,10 +91,12 @@ auto BitWriter::write_pred_size(uint64_t value, uint64_t size) -> void {
 }
 
 auto BitWriter::flush() -> void {
-    if (!this->bit_buffer.empty()) {
-        size_t bytes = (this->bit_buffer.get_offset() + bit_size_of<uint8_t>() - 1) / bit_size_of<uint8_t>();
-        this->output.write(reinterpret_cast<const char*>(this->bit_buffer.data()), bytes);
-    }
-    this->bit_buffer.set_offset(0);
-    std::memset(this->bit_buffer.data(), 0, this->bit_buffer.capacity());
+    this->flush_buffer();
+    this->output.flush();
+}
+
+auto BitWriter::flush_buffer() -> void {
+    this->output.write((const char*)&this->current_output, sizeof(this->current_output));
+    this->current_output = 0;
+    this->output_offset = 0;
 }

@@ -41,6 +41,8 @@ auto reduce_values(const std::vector<T>& vals, F call) {
     return result;
 }
 
+auto bit_reverse(uint64_t) -> uint64_t;
+
 auto split_string(const std::string&, const std::string&) -> std::vector<std::string>;
 auto trim_string(const std::string&) -> std::string;
 auto concat_string(const std::string&, const std::string&, const std::string&) -> std::string;

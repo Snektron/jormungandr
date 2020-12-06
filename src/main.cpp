@@ -108,8 +108,6 @@ auto main(int argc, char* argv[]) -> int {
             return EXIT_FAILURE;
         }
 
-
-
         return EXIT_SUCCESS;
     } catch(const std::runtime_error& err) {
         std::cerr << "Exception occurred: " << err.what() << std::endl;

@@ -1,5 +1,15 @@
 #include "utility.hpp"
 
+auto bit_reverse(uint64_t orig) -> uint64_t {
+    orig = ((orig >>  1) & 0x5555555555555555ull) | ((orig & 0x5555555555555555ull) << 1);
+    orig = ((orig >>  2) & 0x3333333333333333ull) | ((orig & 0x3333333333333333ull) << 2);
+    orig = ((orig >>  4) & 0x0F0F0F0F0F0F0F0Full) | ((orig & 0x0F0F0F0F0F0F0F0Full) << 4);
+    orig = ((orig >>  8) & 0x00FF00FF00FF00FFull) | ((orig & 0x00FF00FF00FF00FFull) << 8);
+    orig = ((orig >> 16) & 0x0000FFFF0000FFFFull) | ((orig & 0x0000FFFF0000FFFFull) << 16);
+    orig = ((orig >> 32)                        ) | ((orig                        ) << 32);
+    return orig;
+}
+
 auto split_string(const std::string& key, const std::string& value) -> std::vector<std::string> {
     if(key.size() == 0)
         return std::vector<std::string>();

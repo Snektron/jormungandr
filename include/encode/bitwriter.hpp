@@ -9,8 +9,10 @@
 class BitWriter {
     private:
         std::ostream& output;
-        BitBuffer<16> bit_buffer;
+        uint64_t current_output;
+        size_t output_offset;
 
+        void flush_buffer();
     public:
         BitWriter(std::ostream& output);
         ~BitWriter();
