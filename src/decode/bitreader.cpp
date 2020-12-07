@@ -41,9 +41,8 @@ auto BitReader::read_bit() -> uint8_t {
     return *maybe_bit;
 }
 
-auto BitReader::read_bits(size_t n, std::endian endian) -> uint64_t {
+auto BitReader::read_bits(size_t n) -> uint64_t {
     assert(n <= bit_size_of<uint64_t>());
-    assert(endian == std::endian::big);
 
     uint64_t result = 0;
     while (true) {

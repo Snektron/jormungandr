@@ -37,7 +37,7 @@ class BitReader {
         auto peek_bit() -> std::optional<uint8_t>;
         auto read_bit() -> uint8_t;
 
-        auto read_bits(size_t n, std::endian endian = std::endian::big) -> uint64_t;
+        auto read_bits(size_t n) -> uint64_t;
         auto read_unary(uint8_t bit) -> uint64_t;
         // Also read a terminating bit, (which is !bit)
         auto read_unary_with_terminator(uint8_t bit) -> uint64_t;
