@@ -61,62 +61,54 @@ auto print_usage(const char* prog) -> void {
 
 auto main(int argc, char* argv[]) -> int {
     try {
-        // bool parse_input = false;
-        // bool parse_output = false;
-        // const char* input_file = NULL;
-        // const char* output_file = NULL;
-        // EncodingType input_encoding = EncodingType::TSV;
-        // EncodingType output_encoding = EncodingType::WEBGRAPH;
+        bool parse_input = false;
+        bool parse_output = false;
+        const char* input_file = NULL;
+        const char* output_file = NULL;
+        EncodingType input_encoding = EncodingType::TSV;
+        EncodingType output_encoding = EncodingType::WEBGRAPH;
 
-        // for(int i = 1; i < argc; ++i) {
-        //     const char* arg = argv[i];
+        for(int i = 1; i < argc; ++i) {
+            const char* arg = argv[i];
 
-        //     if(parse_input || parse_output) {
-        //         EncodingType encoding;
-        //         if(!std::strcmp(arg, "tsv"))
-        //             encoding = EncodingType::TSV;
-        //         else if(!std::strcmp(arg, "binary"))
-        //             encoding = EncodingType::BINARY;
-        //         else if(!std::strcmp(arg, "webgraph"))
-        //             encoding = EncodingType::WEBGRAPH;
-        //         else {
-        //             print_usage(argv[0]);
-        //             return EXIT_FAILURE;
-        //         }
-        //         (parse_input ? input_encoding : output_encoding) = encoding;
-        //         parse_output = parse_input = false;
-        //         continue;
-        //     }
-        //     if(!std::strcmp(arg, "--input"))
-        //         parse_input = true;
-        //     else if(!std::strcmp(arg, "--output"))
-        //         parse_output = true;
-        //     else {
-        //         if(input_file == NULL)
-        //             input_file = arg;
-        //         else if(output_file == NULL)
-        //             output_file = arg;
-        //         else {
-        //             print_usage(argv[0]);
-        //             return EXIT_FAILURE;
-        //         }
-        //     }
-        // }
-
-        // if(parse_output || parse_input || !input_file || !output_file) {
-        //     print_usage(argv[0]);
-        //     return EXIT_FAILURE;
-        // }
-
-        std::stringstream buf;
-        auto x = BitWriter(buf);
-        x.write_unary_with_terminator(10, 0);
-        x.flush();
-
-        std::string res = buf.str();
-        for(size_t i = 0; i < res.size(); ++i) {
-            std::cout << std::bitset<8>((unsigned)res[i]) << " ";
+            if(parse_input || parse_output) {
+                EncodingType encoding;
+                if(!std::strcmp(arg, "tsv"))
+                    encoding = EncodingType::TSV;
+                else if(!std::strcmp(arg, "binary"))
+                    encoding = EncodingType::BINARY;
+                else if(!std::strcmp(arg, "webgraph"))
+                    encoding = EncodingType::WEBGRAPH;
+                else {
+                    print_usage(argv[0]);
+                    return EXIT_FAILURE;
+                }
+                (parse_input ? input_encoding : output_encoding) = encoding;
+                parse_output = parse_input = false;
+                continue;
+            }
+            if(!std::strcmp(arg, "--input"))
+                parse_input = true;
+            else if(!std::strcmp(arg, "--output"))
+                parse_output = true;
+            else {
+                if(input_file == NULL)
+                    input_file = arg;
+                else if(output_file == NULL)
+                    output_file = arg;
+                else {
+                    print_usage(argv[0]);
+                    return EXIT_FAILURE;
+                }
+            }
         }
+
+        if(parse_output || parse_input || !input_file || !output_file) {
+            print_usage(argv[0]);
+            return EXIT_FAILURE;
+        }
+
+
 
         return EXIT_SUCCESS;
     } catch(const std::runtime_error& err) {

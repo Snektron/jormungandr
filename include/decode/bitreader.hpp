@@ -5,13 +5,24 @@
 #include <optional>
 #include <bit>
 #include <cstdint>
+#include <vector>
 
 #include "bitbuffer.hpp"
 
 class BitReader {
     private:
+        constexpr const static size_t buffer_size = 2048;
+
         std::istream& input;
-        BitBuffer<16> buffer;
+        uint64_t buffer[buffer_size];
+        size_t offset;
+        size_t buffer_bytes_left;
+
+        struct BitBuf {
+            uint64_t value;
+            uint8_t len;
+        };
+
     public:
         BitReader(std::istream& input);
 
@@ -22,7 +33,6 @@ class BitReader {
         BitReader& operator=(BitReader&&) = delete;
 
         auto at_end() const -> bool;
-        auto seek(size_t bit_offset) -> void;
 
         auto peek_bit() -> std::optional<uint8_t>;
         auto read_bit() -> uint8_t;
@@ -38,9 +48,16 @@ class BitReader {
         auto read_golomb(uint64_t b) -> uint64_t;
         auto read_pred_size(uint64_t size) -> uint64_t;
 
+        auto discard(size_t amt) -> void;
     private:
-        auto discard_buffer_bit() -> void;
-        auto refill_buffer() -> bool;
+        auto refill_buffer() -> void;
+        auto buffer_element_offset() -> size_t;
+        auto buffer_bits_left() -> size_t;
+
+    public:
+        auto peek_buffer() -> BitBuf;
+
+        // auto peek_buffer(size_t i) -> BitBuf;
 };
 
 #endif

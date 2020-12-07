@@ -2,33 +2,33 @@
 #include "utility.hpp"
 #include "exceptions.hpp"
 #include <istream>
+#include <limits>
 #include <climits>
 #include <cassert>
+#include <iostream>
+#include <algorithm>
+#include <bitset>
 
 BitReader::BitReader(std::istream& input):
-    input(input) {}
+    input(input), offset(0), buffer_bytes_left(0) {
+    for (size_t i = 0; i < buffer_size; ++i) {
+        this->buffer[i] = 0;
+    }
+
+    this->refill_buffer();
+}
 
 auto BitReader::at_end() const -> bool {
     return this->input.eof();
 }
 
-auto BitReader::seek(size_t bit_offset) -> void {
-    this->input.clear();
-    this->input.seekg(bit_offset / bit_size_of<uint8_t>());
-    if (this->input.fail() || !this->refill_buffer()) {
-        this->input.setstate(std::ios::eofbit);
-        return;
+auto BitReader::peek_bit() -> std::optional<uint8_t> {
+    if (this->buffer_bits_left() == 0) {
+        return std::nullopt;
     }
 
-    for(size_t i = 0; i < bit_offset % bit_size_of<uint8_t>(); ++i)
-        this->discard_buffer_bit();
-}
-
-auto BitReader::peek_bit() -> std::optional<uint8_t> {
-    if(this->buffer.empty() && !this->refill_buffer())
-        return std::nullopt;
-
-    return this->buffer.top_bit();
+    auto shift = this->offset % bit_size_of<uint64_t>();
+    return (this->buffer[this->buffer_element_offset()] >> shift) & 1;
 }
 
 auto BitReader::read_bit() -> uint8_t {
@@ -37,30 +37,35 @@ auto BitReader::read_bit() -> uint8_t {
         throw EncodingException("Unexpected EOF");
     }
 
-    this->discard_buffer_bit();
+    this->discard(1);
     return *maybe_bit;
 }
 
 auto BitReader::read_bits(size_t n, std::endian endian) -> uint64_t {
     assert(n <= bit_size_of<uint64_t>());
+    assert(endian == std::endian::big);
 
     uint64_t result = 0;
-    switch (endian) {
-        case std::endian::big:
-            while (n-- > 0) {
-                result <<= 1;
-                result |= this->read_bit();
-            }
+    while (true) {
+        auto buf = this->peek_buffer();
+        uint64_t value = bit_reverse(buf.value) >> (bit_size_of<uint64_t>() - buf.len);
+        if (buf.len == 0) {
+            throw EncodingException("Unexpected EOF");
+        } else if (n <= buf.len) {
+            auto x = buf.len - n;
+            value >>= x;
+            result <<= n;
+            result |= value;
+            this->discard(n);
             break;
-        case std::endian::little:
-            for (size_t i = 0; i < n; ++i) {
-                result |= this->read_bit() << i;
-            }
-            break;
-        default:
-            // Mixed endian
-            assert(false);
+        } else {
+            result <<= buf.len;
+            result |= value;
+            n -= buf.len;
+            this->discard(buf.len);
+        }
     }
+
     return result;
 }
 
@@ -68,13 +73,27 @@ auto BitReader::read_unary(uint8_t bit) -> uint64_t {
     assert(bit == 0 || bit == 1);
 
     uint64_t result = 0;
-    while (true) {
-        auto maybe_bit = this->peek_bit();
-        if (!maybe_bit || *maybe_bit != bit)
-            break;
 
-        this->discard_buffer_bit();
-        ++result;
+    if (bit == 0) {
+        while (true) {
+            auto buf = this->peek_buffer();
+            auto count = std::min<size_t>(std::countr_zero(buf.value), buf.len);
+            this->discard(count);
+            result += count;
+            if (buf.len == 0 || count != buf.len) {
+                break;
+            }
+        }
+    } else {
+        while (true) {
+            auto buf = this->peek_buffer();
+            auto count = std::min<size_t>(std::countr_one(buf.value), buf.len);
+            this->discard(count);
+            result += count;
+            if (buf.len == 0 || count != buf.len) {
+                break;
+            }
+        }
     }
 
     return result;
@@ -131,21 +150,54 @@ auto BitReader::read_pred_size(uint64_t size) -> uint64_t {
     return this->read_bits(bit_size);
 }
 
-auto BitReader::discard_buffer_bit() -> void {
-    this->buffer.pop_bit();
-
-    // Refill if required
-    // Also trigger eofbit when called from `read_bit`
-    if (this->buffer.empty()) {
+auto BitReader::discard(size_t amt) -> void {
+    size_t buffer_size = this->buffer_bytes_left * bit_size_of<uint8_t>();
+    assert(this->offset + amt <= buffer_size);
+    if (this->offset + amt == buffer_size) {
         this->refill_buffer();
+        return;
     }
+
+    this->offset += amt;
 }
 
-auto BitReader::refill_buffer() -> bool {
-    this->input.read(reinterpret_cast<char*>(this->buffer.data()),
-                        this->buffer.capacity());
-    auto bytes_read = this->input.gcount();
-    this->buffer.set_offset(bytes_read * bit_size_of<uint8_t>());
-    this->buffer.set_size(bytes_read);
-    return bytes_read != 0;
+auto BitReader::refill_buffer() -> void {
+    this->input.read(
+        reinterpret_cast<char*>(this->buffer),
+        buffer_size * sizeof(uint64_t)
+    );
+
+    this->offset = 0;
+    size_t bytes_read = this->input.gcount();
+    size_t valid_elements = bytes_read / sizeof(uint64_t);
+    size_t valid_last_bytes = bytes_read % sizeof(uint64_t);
+
+    if (valid_last_bytes != 0) {
+        // Make sure to zero the other bytes in the last element
+        this->buffer[valid_elements] &= (1ULL << (valid_last_bytes * bit_size_of<uint8_t>())) - 1;
+        valid_elements += 1;
+    }
+
+    for (size_t i = 0; i < valid_elements; ++i) {
+        this->buffer[i] = byte_bit_reverse64(this->buffer[i]);
+    }
+
+    this->buffer_bytes_left = bytes_read;
+}
+
+auto BitReader::buffer_element_offset() -> size_t {
+    return this->offset / bit_size_of<uint64_t>();
+}
+
+auto BitReader::buffer_bits_left() -> size_t {
+    return this->buffer_bytes_left * bit_size_of<uint8_t>() - this->offset;
+}
+
+auto BitReader::peek_buffer() -> BitBuf {
+    auto i = this->buffer_element_offset();
+    auto shift = this->offset % bit_size_of<uint64_t>();
+    auto remaining_bits = std::min(bit_size_of<uint64_t>() - shift, this->buffer_bits_left());
+
+    auto elem = this->buffer[i];
+    return {elem >> shift, static_cast<uint8_t>(remaining_bits)};
 }

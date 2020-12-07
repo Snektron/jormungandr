@@ -4,6 +4,9 @@
 #include <climits>
 #include <sstream>
 #include <vector>
+#include <array>
+#include <algorithm>
+#include <numeric>
 #include <type_traits>
 
 template <typename T>
@@ -43,6 +46,7 @@ auto reduce_values(const std::vector<T>& vals, F call) {
 
 auto bit_reverse(uint64_t) -> uint64_t;
 auto byte_swap(uint64_t) -> uint64_t;
+auto byte_bit_reverse64(uint64_t) -> uint64_t;
 
 auto split_string(const std::string&, const std::string&) -> std::vector<std::string>;
 auto trim_string(const std::string&) -> std::string;

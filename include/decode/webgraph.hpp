@@ -76,14 +76,16 @@ auto WebGraphDecoder<T>::next_node() -> std::optional<Node> {
     }
 
     if (this->encoding_config.min_interval_size > 0 && neighbours.size() < out_degree) {
+        size_t mid = neighbours.size();
         this->decode_interval_list(index, neighbours);
+        std::inplace_merge(neighbours.begin(), neighbours.begin() + mid, neighbours.end());
     }
 
     if (neighbours.size() < out_degree) {
+        size_t mid = neighbours.size();
         this->decode_residual_list(index, out_degree - neighbours.size(), neighbours);
+        std::inplace_merge(neighbours.begin(), neighbours.begin() + mid, neighbours.end());
     }
-
-    std::sort(neighbours.begin(), neighbours.end());
 
     return {{index, neighbours}};
 }

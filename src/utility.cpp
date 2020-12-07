@@ -17,6 +17,13 @@ auto byte_swap(uint64_t orig) -> uint64_t {
     return orig;
 }
 
+auto byte_bit_reverse64(uint64_t orig) -> uint64_t {
+    orig = ((orig >>  1) & 0x5555555555555555ull) | ((orig & 0x5555555555555555ull) << 1);
+    orig = ((orig >>  2) & 0x3333333333333333ull) | ((orig & 0x3333333333333333ull) << 2);
+    orig = ((orig >>  4) & 0x0F0F0F0F0F0F0F0Full) | ((orig & 0x0F0F0F0F0F0F0F0Full) << 4);
+    return orig;
+}
+
 auto split_string(const std::string& key, const std::string& value) -> std::vector<std::string> {
     if(key.size() == 0)
         return std::vector<std::string>();

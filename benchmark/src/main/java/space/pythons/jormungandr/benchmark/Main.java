@@ -75,7 +75,5 @@ public class Main {
         } else {
             System.err.println("Invalid operation '" + args[0] + "'");
         }
-
-        // var graph = BVGraph.load(args[0], 0);
     }
 }
