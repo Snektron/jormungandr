@@ -53,6 +53,7 @@ WebGraphDecoder<T>::WebGraphDecoder(std::istream& input, std::istream& propertie
     input(input), next_node_index(0) {
     auto property_map = PropertyParser(properties).decode();
     this->num_nodes = property_map.as<T>("nodes");
+    std::cout << "From properties" << std::endl;
     this->encoding_config = EncodingConfig::from_properties(property_map);
     this->window.resize(this->encoding_config.window_size + 1);
 }

@@ -193,11 +193,16 @@ auto main(int argc, char* argv[]) -> int {
         auto ssx = std::stringstream();
         ssx << in.rdbuf();
         auto props = std::ifstream(std::string(argv[1]) + ".properties");
-        std::cout << "Decoding" << std::endl;
         auto decoder = WebGraphDecoder<node_type>(ssx, props);
-        std::cout << "Decoding for real" << std::endl;
+
+        std::cout << "Decoding" << std::endl;
+
         auto original = decoder.decode();
-        std::cout << "Decoding done" << std::endl;
+        // original.for_each([](auto node, const auto& edges) {
+        //     for(auto x : edges) {
+        //         std::cout << "Found edge " << node << " -> " << x << std::endl;
+        //     }
+        // });
         // while (auto node = decoder.next_node()) {
         //     continue;
         // }
@@ -212,6 +217,10 @@ auto main(int argc, char* argv[]) -> int {
         auto encoding = EncodingConfig();
         auto encoder = WebGraphEncoder<node_type>(ss, encoding, original);
         auto new_props = encoder.encode();
+
+        std::ofstream out(std::string(argv[1]) + ".temp.out", std::ios::binary);
+        out << ss.rdbuf();
+        ss.seekg(0);
 
         std::cout << "Re-decoding" << std::endl;
         auto redecoder = WebGraphDecoder<node_type>(ss, original.num_nodes(), encoding);
