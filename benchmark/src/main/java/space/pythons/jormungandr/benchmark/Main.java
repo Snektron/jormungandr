@@ -5,6 +5,8 @@ import it.unimi.dsi.webgraph.NodeIterator;
 import it.unimi.dsi.webgraph.ArrayListMutableGraph;
 import it.unimi.dsi.logging.ProgressLogger;
 
+import java.util.logging.*;
+
 public class Main {
     static String USAGE =
         "Usage: either of\n" +
@@ -30,19 +32,19 @@ public class Main {
         for (int i = 1; i < args.length; ++i) {
             switch (args[i]) {
                 case "--threads":
-                    threads = Integer.parseInt(args[i++], 10);
+                    threads = Integer.parseInt(args[++i], 10);
                     continue;
                 case "--window-size":
-                    window_size = Integer.parseInt(args[i++], 10);
+                    window_size = Integer.parseInt(args[++i], 10);
                     continue;
                 case "--zeta-k":
-                    window_size = Integer.parseInt(args[i++], 10);
+                    window_size = Integer.parseInt(args[++i], 10);
                     continue;
                 case "--min-interval-size":
-                    window_size = Integer.parseInt(args[i++], 10);
+                    window_size = Integer.parseInt(args[++i], 10);
                     continue;
                 case "--max-ref-count":
-                    window_size = Integer.parseInt(args[i++], 10);
+                    window_size = Integer.parseInt(args[++i], 10);
                     continue;
             }
 
@@ -73,7 +75,7 @@ public class Main {
             zeta_k,
             BVGraph.OUTDEGREES_DELTA | BVGraph.REFERENCES_UNARY | BVGraph.RESIDUALS_ZETA,
             threads,
-            new ProgressLogger()
+            (ProgressLogger) null
         );
         long stop = System.nanoTime();
 
