@@ -6,7 +6,7 @@ ROOT=$(realpath $(dirname $0))
 DATASET_DIR=$(realpath $ROOT/../test)
 DATASETS="$(find $DATASET_DIR -type f -name *.graph)"
 BENCHMARK="$ROOT/build/install/benchmark/bin/benchmark"
-REPETITIONS=3
+REPETITIONS=5
 
 function run_tests() {
     for F in $DATASETS; do
@@ -14,8 +14,6 @@ function run_tests() {
         GRAPH_PATH="$(dirname $F)/$GRAPH"
         RUNTIMES=""
         for I in $(seq $REPETITIONS); do
-            # RUNTIME="$1 $GRAPH_PATH"
-            # RUNTIME="$($BENCHMARK decode $GRAPH_PATH)"
             $1 $GRAPH_PATH
             RUNTIMES="$RUNTIMES $RUNTIME"
         done
