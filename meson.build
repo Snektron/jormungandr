@@ -49,3 +49,12 @@ executable(
     include_directories: include,
     link_with: lib
 )
+
+executable(
+    'jormungandr-benchmark',
+    'src/benchmark.cpp',
+    install: true,
+    build_by_default: true,
+    include_directories: include,
+    link_with: lib
+)

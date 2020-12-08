@@ -26,32 +26,6 @@ enum class EncodingType {
     WEBGRAPH
 };
 
-auto dump_graph(const Graph<node_type>& g) {
-    g.for_each([](node_type src, std::span<const node_type> neighbours) {
-        std::cout << src << ": out_degree = " << neighbours.size() << std::endl;
-        for (const auto dst : neighbours) {
-            std::cout << src << " -> " << dst << std::endl;
-        }
-    });
-}
-
-auto graph_eql(const Graph<node_type>& a, const Graph<node_type>& b) {
-    if (a.num_nodes() != b.num_nodes()) {
-        return false;
-    }
-
-    for (node_type i = 0; i < a.num_nodes(); ++i) {
-        auto na = a.neighbours(i);
-        auto nb = b.neighbours(i);
-
-        if (!std::equal(na.begin(), na.end(), nb.begin(), nb.end())) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 auto find_property_file(const std::string& filename) {
     auto it = filename.find_last_of(".");
     if(it == std::string::npos)

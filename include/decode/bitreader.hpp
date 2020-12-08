@@ -48,16 +48,12 @@ class BitReader {
         auto read_golomb(uint64_t b) -> uint64_t;
         auto read_pred_size(uint64_t size) -> uint64_t;
 
-        auto discard(size_t amt) -> void;
     private:
+        auto discard(size_t amt) -> void;
         auto refill_buffer() -> void;
         auto buffer_element_offset() -> size_t;
         auto buffer_bits_left() -> size_t;
-
-    public:
         auto peek_buffer() -> BitBuf;
-
-        // auto peek_buffer(size_t i) -> BitBuf;
 };
 
 #endif

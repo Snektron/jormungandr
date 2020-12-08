@@ -35,11 +35,11 @@ function run_encode_test_threaded() {
     rm $1.out.*
 }
 
-# echo "Running decode tests"
-# run_tests run_decode_test
+echo "Running decode tests"
+run_tests run_decode_test
 
-# echo "Running encode tests"
-# run_tests run_encode_test
+echo "Running encode tests"
+run_tests run_encode_test
 
 echo "Running threaded encode tests"
 run_tests run_encode_test_threaded
