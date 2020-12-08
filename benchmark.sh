@@ -1,12 +1,40 @@
-#/usr/bin/bash
+#!/usr/bin/bash
 
 set -eu
 
 ROOT=$(realpath $(dirname $0))
-DATASET_DIR=$(realpath $ROOT/../test)
+DATASET_DIR=$(realpath $ROOT/test)
 DATASETS="$(find $DATASET_DIR -type f -name *.graph)"
-BENCHMARK="$ROOT/build/install/benchmark/bin/benchmark"
+BENCHMARK=""
+ENABLE_THREADED=0
 REPETITIONS=5
+
+while (( "$#" )); do
+    case "$1" in
+        --threaded)
+            ENABLE_THREADED=1
+            shift
+            ;;
+        -*)
+            echo "Error: Unknown flag $1"
+            exit 1
+            ;;
+        *)
+            if [ -n "$BENCHMARK" ]; then
+                echo "Error: Unknown parameter $1"
+                exit 1
+            fi
+
+            BENCHMARK=$1
+            shift
+        ;;
+    esac
+done
+
+if [ -z "$BENCHMARK" ]; then
+    echo "Error: Missing argument <benchmark executable>"
+    exit 1
+fi
 
 function run_tests() {
     for F in $DATASETS; do
@@ -41,5 +69,7 @@ run_tests run_decode_test
 echo "Running encode tests"
 run_tests run_encode_test
 
-echo "Running threaded encode tests"
-run_tests run_encode_test_threaded
+if [ "$ENABLE_THREADED" == "1" ]; then
+    echo "Running threaded encode tests"
+    run_tests run_encode_test_threaded
+fi

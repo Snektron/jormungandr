@@ -50,11 +50,21 @@ executable(
     link_with: lib
 )
 
-executable(
+jormungandr_benchmark = executable(
     'jormungandr-benchmark',
     'src/benchmark.cpp',
     install: true,
     build_by_default: true,
     include_directories: include,
     link_with: lib
+)
+
+run_target(
+    'bench-jormungandr',
+    command: ['benchmark.sh', jormungandr_benchmark]
+)
+
+run_target(
+    'bench-webgraph',
+    command: ['webgraph_benchmark.sh']
 )
