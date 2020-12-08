@@ -52,6 +52,13 @@ auto graph_eql(const Graph<node_type>& a, const Graph<node_type>& b) {
     return true;
 }
 
+auto find_property_file(const std::string& filename) {
+    auto it = filename.find_last_of(".");
+    if(it == std::string::npos)
+        return filename + ".properties";
+    return filename.substr(0, it) + ".properties";
+}
+
 auto print_usage(const char* prog) -> void {
     std::cerr << "Usage: " << prog << " [options] <input file> <output file>\n"
         "options:\n"
@@ -108,7 +115,55 @@ auto main(int argc, char* argv[]) -> int {
             return EXIT_FAILURE;
         }
 
+        auto input = std::ifstream(input_file, std::ios::binary);
+        if(!input) {
+            std::cerr << "Failed to open input file " << input_file << std::endl;
+            return 1;
+        }
 
+        auto graph = [&]() {
+            switch(input_encoding) {
+                case EncodingType::TSV:
+                    return TsvDecoder<node_type>(input).decode();
+                case EncodingType::BINARY:
+                    return BinaryDecoder<node_type>(input).decode();
+                case EncodingType::WEBGRAPH: {
+                    auto prop_filename = find_property_file(input_file);
+                    auto prop_input = std::ifstream(prop_filename);
+                    if(!prop_input)
+                        throw PropertyException("Failed to find property file ", prop_filename);
+                    return WebGraphDecoder<node_type>(input, prop_input).decode();
+                }
+            }
+        }();
+
+        input.close();
+
+        auto output = std::ofstream(output_file, std::ios::binary);
+        if(!output) {
+            std::cerr << "Failed to open output file " << output_file << std::endl;
+            return 1;
+        }
+
+        switch(output_encoding) {
+            case EncodingType::TSV:
+                TsvEncoder(output, graph).encode();
+                break;
+            case EncodingType::BINARY:
+                BinaryEncoder(output, graph).encode();
+                break;
+            case EncodingType::WEBGRAPH: {
+                EncodingConfig encoding_config;
+                auto props = WebGraphEncoder(output, encoding_config, graph).encode();
+
+                auto prop_output_filename = find_property_file(output_file);
+                auto prop_output = std::ofstream(prop_output_filename);
+                if(!prop_output)
+                    throw PropertyException("Failed to create property file ", prop_output_filename);
+                PropertyEncoder(prop_output).encode(props);
+                break;
+            }
+        }
 
         return EXIT_SUCCESS;
     } catch(const std::runtime_error& err) {

@@ -7,6 +7,9 @@
 
 template <typename T>
 class BinaryEncoder {
+    private:
+        std::ostream& output;
+        const Graph<T>& graph;
     public:
         BinaryEncoder(std::ostream&, const Graph<T>&);
         ~BinaryEncoder() = default;
@@ -15,8 +18,11 @@ class BinaryEncoder {
 };
 
 template <typename T>
-BinaryEncoder<T>::BinaryEncoder(std::ostream& output, const Graph<T>& graph) {
-    graph.forEach([&](auto node, const auto& neighbours) {
+BinaryEncoder<T>::BinaryEncoder(std::ostream& output, const Graph<T>& graph) : output(output), graph(graph) {}
+
+template <typename T>
+auto BinaryEncoder<T>::encode() -> void {
+    this->graph.for_each([&](auto node, const auto& neighbours) {
         for(auto neighbour : neighbours) {
             this->output.write((const char*)&node, sizeof(node));
             this->output.write((const char*)&neighbour, sizeof(neighbour));

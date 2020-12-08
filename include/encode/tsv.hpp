@@ -24,7 +24,7 @@ TsvEncoder<T>::TsvEncoder(std::ostream& output, const Graph<T>& graph, char sep)
 
 template <typename T>
 auto TsvEncoder<T>::encode() -> void {
-    this->graph.forEach([&](auto node, const auto& neighbours) {
+    this->graph.for_each([&](auto node, const auto& neighbours) {
         for(auto neighbour : neighbours) {
             this->output << node << sep << neighbour << std::endl;
         }
