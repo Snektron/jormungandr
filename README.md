@@ -13,4 +13,14 @@ $ meson ..
 $ ninja
 ```
 
-Jormungandr may also be used from
+Jormungandr may also be used from other Meson projects by means of a subproject:
+
+```
+dep = subproject('jormungandr').get_variable('jormungandr_dep')
+```
+
+## Benchmarking
+
+The default target generates the `jormungandr-benchmark` executable. This simply measures the time to encode or decode a webgraph file in nanoseconds. See src/benchmark.cpp for further details. Benchmarks can be performed automatically by downloading webgraph files (from https://law.di.unimi.it/ for example) into the test/ directory, and executing the `ninja bench-jormungandr`. This calls `benchmark.sh`, which then gathers the results. See `benchmark.sh` for further details.
+
+This repository also contains the means to compare to the original WebGraph implementation. `benchmark/` contains a small java program, which usage is similar to that of jormunhandr-benchmark. Executing `ninja bench-webgraph` performs the same exact benchmarks as the `bench-jormungandr` target.
