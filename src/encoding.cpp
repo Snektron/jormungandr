@@ -56,6 +56,7 @@ auto EncodingConfig::from_properties(const PropertyMap& properties) -> EncodingC
             config.reference_encoding = encoding.value();
         } else if (auto encoding = parse_encoding(flag, "RESIDUALS_")) {
             config.residual_encoding = encoding.value();
+            config.residual_encoding_start = encoding.value();
         } else if (auto encoding = parse_encoding(flag, "OFFSETS_")) {
             // Ignored for now
         } else {

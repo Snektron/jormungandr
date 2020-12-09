@@ -22,6 +22,7 @@ auto BitWriter::write_bit(uint8_t bit) -> void {
 
 auto BitWriter::write_bits(uint64_t value, uint64_t n, std::endian endian) -> void {
     assert(n <= bit_size_of<uint64_t>());
+    assert(std::bit_width(value) <= n);
 
     if(endian == std::endian::little)
         value = bit_reverse(value) >> (bit_size_of<uint64_t>() - n);

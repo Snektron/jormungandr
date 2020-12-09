@@ -20,6 +20,7 @@ struct EncodingConfig {
     Encoding outdegree_encoding = Encoding::GAMMA;
     Encoding reference_encoding = Encoding::UNARY;
     Encoding residual_encoding = Encoding::ZETA;
+    Encoding residual_encoding_start = Encoding::ZETA;
 
     // According to the Java source, this is always gamma
     Encoding interval_count_encoding = Encoding::GAMMA;
